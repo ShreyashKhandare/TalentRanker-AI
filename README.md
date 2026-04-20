@@ -1,5 +1,7 @@
 # TalentRanker-AI
 
+An intelligent job-fit ranking system that goes beyond keyword matching using learning-to-rank models and semantic embeddings.
+
 An AI-powered resume-to-job matching system with explainable insights, built with FastAPI, XGBoost, and Sentence Transformers.
 
 ## 🧠 System Architecture
@@ -422,7 +424,7 @@ This demonstrates how semantic embeddings improve real-world ranking beyond exac
 
 ## UI Preview
 
-![TalentRanker-AI Interface](https://via.placeholder.com/800x400/1e293b/f8fafc?text=TalentRanker-AI+Interface)
+![UI](static/screenshot.png)
 
 *Modern web interface with PDF upload, semantic analysis, and explainable AI insights*
 
