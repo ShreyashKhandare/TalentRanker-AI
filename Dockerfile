@@ -14,10 +14,12 @@ RUN apt-get update && apt-get install -y \
     g++ \
     && rm -rf /var/lib/apt/lists/*
 
+# ---- CACHE BREAKER ----
 ARG CACHE_BUST=1
 
-# Install Python dependencies
+# Install Python dependencies (force fresh + correct versions)
 COPY requirements.txt .
+
 RUN pip install --no-cache-dir --upgrade pip && \
     pip install --no-cache-dir --upgrade -r requirements.txt
 
