@@ -1,0 +1,36 @@
+{
+  "study_type": "Ablation Study - Baseline vs Advanced",
+  "baseline_features": [
+    "skill_overlap",
+    "weighted_score"
+  ],
+  "advanced_features": [
+    "skill_overlap",
+    "weighted_score",
+    "semantic_similarity"
+  ],
+  "baseline_ndcg": 0.9681,
+  "advanced_ndcg": 0.9788,
+  "improvement": 0.0107,
+  "improvement_percentage": 1.11,
+  "baseline_feature_importances": {
+    "skill_overlap": 0.519903,
+    "weighted_score": 0.480097
+  },
+  "advanced_feature_importances": {
+    "skill_overlap": 0.381345,
+    "weighted_score": 0.426261,
+    "semantic_similarity": 0.192394
+  },
+  "dataset_info": {
+    "total_samples": 1262,
+    "train_samples": 1002,
+    "val_samples": 260,
+    "unique_users": 100,
+    "unique_jobs": 1262
+  },
+  "models_saved": {
+    "baseline_model": "D:\\ML project\\model_baseline.json",
+    "advanced_model": "D:\\ML project\\model_advanced.json"
+  }
+}
