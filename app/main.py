@@ -1,3 +1,12 @@
+# Import guard for huggingface_hub cached_download compatibility
+import huggingface_hub
+from huggingface_hub import hf_hub_download
+
+# This manually re-links the old name to the new function 
+# to stop the ImportError before it happens.
+if not hasattr(huggingface_hub, 'cached_download'):
+    huggingface_hub.cached_download = hf_hub_download
+
 """FastAPI service for job-match inference."""
 
 from __future__ import annotations
