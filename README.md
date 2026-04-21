@@ -424,7 +424,7 @@ This demonstrates how semantic embeddings improve real-world ranking beyond exac
 
 ## UI Preview
 
-![UI](static/screenshot.png)
+![TalentRanker-AI Interface](https://via.placeholder.com/800x400/1e293b/f8fafc?text=TalentRanker-AI+Interface)
 
 *Modern web interface with PDF upload, semantic analysis, and explainable AI insights*
 
