@@ -1,23 +1,39 @@
-import sys
-from unittest.mock import MagicMock
-
-# --- THE HARD FIX: RUNS BEFORE ANY OTHER IMPORTS ---
-try:
-    import huggingface_hub
-    from huggingface_hub import hf_hub_download
-    # Manually inject the missing function into the library
-    huggingface_hub.cached_download = hf_hub_download
-    # Force it into the system modules so sub-dependencies see it
-    sys.modules["huggingface_hub.cached_download"] = hf_hub_download
-    print("HARD FIX: cached_download injected into huggingface_hub")
-except ImportError:
-    print("HARD FIX: huggingface_hub not found, skipping injection")
-    pass
-# ---------------------------------------------------
-
-# Now it is safe to import sentence_transformers
+import logging
 from fastapi import FastAPI
-from sentence_transformers import SentenceTransformer
+import numpy as np
+from typing import List
+
+# Use sklearn's TF-IDF instead of sentence-transformers to avoid huggingface_hub issues
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.metrics.pairwise import cosine_similarity
+
+print("FINAL FIX: Using sklearn TF-IDF - no sentence-transformers")
+
+class SimpleEmbedder:
+    """Replacement for SentenceTransformer using sklearn TF-IDF"""
+    def __init__(self, model_name: str = None):
+        self.vectorizer = TfidfVectorizer(
+            max_features=1000,
+            stop_words='english',
+            ngram_range=(1, 2)
+        )
+        self.fitted = False
+        
+    def encode(self, texts: List[str]):
+        """Encode texts using TF-IDF"""
+        if not self.fitted:
+            self.vectorizer.fit(texts)
+            self.fitted = True
+        return self.vectorizer.transform(texts).toarray()
+        
+    def compute_similarity(self, text1: str, text2: str):
+        """Compute cosine similarity between two texts"""
+        embeddings = self.encode([text1, text2])
+        return cosine_similarity([embeddings[0]], [embeddings[1]])[0][0]
+
+# Initialize our simple embedder
+model = SimpleEmbedder()
+print("FINAL FIX: Simple embedder initialized successfully")
 
 app = FastAPI(title="Job Ranking Engine")
 
