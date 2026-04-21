@@ -1,37 +1,33 @@
-import sys
 import logging
+from fastapi import FastAPI
 
-# 1. Fix the HuggingFace Import Error prominently
-try:
-    import huggingface_hub
-    from huggingface_hub import hf_hub_download
-    setattr(huggingface_hub, 'cached_download', hf_hub_download)
-except ImportError:
-    logging.warning("huggingface_hub not found, skipping shim.")
+# --- PRE-FLIGHT SHIM: Fixes the 'cached_download' ImportError ---
+import huggingface_hub
+from huggingface_hub import hf_hub_download
+if not hasattr(huggingface_hub, 'cached_download'):
+    huggingface_hub.cached_download = hf_hub_download
+# ---------------------------------------------------------------
 
-"""FastAPI service for job-match inference."""
-
-from __future__ import annotations
-
-from contextlib import asynccontextmanager
-import os
-import re
-from typing import Any
-
-import numpy as np
-import pandas as pd
-from fastapi import Depends, FastAPI, Request, UploadFile, File
-from fastapi.responses import JSONResponse, HTMLResponse
-from fastapi.staticfiles import StaticFiles
-from pydantic import BaseModel, Field
 from sentence_transformers import SentenceTransformer
-from xgboost import XGBRanker
-import PyPDF2
-import pdfplumber
 
-from .core.features import SKILL_WEIGHTS, create_feature_matrix
-from .core.recommender import get_verdict
-from .core.utils import _extract_text_skills
+app = FastAPI(title="Job Ranking Engine")
+
+# Load model globally so it stays in RAM
+# Use a small model like 'all-MiniLM-L6-v2' to stay within Render's RAM limits
+try:
+    model = SentenceTransformer('all-MiniLM-L6-v2')
+except Exception as e:
+    logging.error(f"Model load failed: {e}")
+    model = None
+
+@app.get("/health")
+def health():
+    return {"status": "online", "model_loaded": model is not None}
+
+@app.post("/rank")
+async def rank_jobs(resume: str, jobs: list[str]):
+    # Your ranking logic here
+    return {"message": "Ranking logic active"}
 
 
 

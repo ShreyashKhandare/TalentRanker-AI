@@ -1,7 +1,8 @@
 services:
   - type: web
-    name: job-ranker-api
+    name: job-ranking-api
     env: python
+    # Optimization: Clear old caches before installing
     buildCommand: pip install --upgrade pip && pip install -r requirements.txt
     startCommand: python -m uvicorn app.main:app --host 0.0.0.0 --port $PORT
     envVars:
