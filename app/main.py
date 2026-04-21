@@ -136,7 +136,8 @@ async def lifespan(app: FastAPI):
 
         ranker = XGBRanker()
         ranker.load_model(MODEL_PATH)
-        st_model = SentenceTransformer("all-MiniLM-L6-v2")
+        # NUCLEAR FIX: Use SimpleEmbedder instead of SentenceTransformer
+        st_model = SimpleEmbedder()
         print(f"Model feature importances: {ranker.feature_importances_}")
 
         RANKER_MODEL = ranker
