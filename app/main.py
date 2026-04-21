@@ -1,69 +1,56 @@
-import logging
+# --- LINE 1: NO IMPORTS ABOVE THIS ---
+import sys
+import huggingface_hub
+from huggingface_hub import hf_hub_download
+
+# Inject the missing function before any other library can complain
+huggingface_hub.cached_download = hf_hub_download
+sys.modules["huggingface_hub.cached_download"] = hf_hub_download
+
+# NOW it is safe to import FastAPI
 from fastapi import FastAPI
-import numpy as np
-from typing import List
+app = FastAPI()
 
-# Use sklearn's TF-IDF for text similarity
-from sklearn.feature_extraction.text import TfidfVectorizer
-from sklearn.metrics.pairwise import cosine_similarity
+# Move this import here to ensure that patch is fully registered
+from sentence_transformers import SentenceTransformer
 
-print("MINIMAL FIX: Using sklearn TF-IDF only")
-
-class SimpleEmbedder:
-    """TF-IDF based text similarity"""
-    def __init__(self, model_name: str = None):
-        self.vectorizer = TfidfVectorizer(
-            max_features=1000,
-            stop_words='english',
-            ngram_range=(1, 2)
-        )
-        self.fitted = False
-        
-    def encode(self, texts: List[str]):
-        """Encode texts using TF-IDF"""
-        if not self.fitted:
-            self.vectorizer.fit(texts)
-            self.fitted = True
-        return self.vectorizer.transform(texts).toarray()
-        
-    def compute_similarity(self, text1: str, text2: str):
-        """Compute cosine similarity between two texts"""
-        embeddings = self.encode([text1, text2])
-        return cosine_similarity([embeddings[0]], [embeddings[1]])[0][0]
-
-# Initialize embedder
-model = SimpleEmbedder()
-print("MINIMAL FIX: TF-IDF embedder ready")
-
-app = FastAPI(title="Job Ranking Engine")
+@app.on_event("startup")
+def load_model():
+    # Loading the model here ensures that patch is fully registered
+    global model
+    model = SentenceTransformer('all-MiniLM-L6-v2')
 
 @app.get("/health")
 def health():
-    return {"status": "online", "model_loaded": model is not None, "engine": "sklearn-tfidf"}
+    return {"status": "online", "engine": "patched"}
 
 @app.post("/rank")
 async def rank_jobs(resume: str, jobs: list[str]):
-    """Rank jobs using TF-IDF similarity"""
+    """Rank jobs using sentence-transformers with patch"""
     try:
-        scores = []
-        for job in jobs:
-            similarity = model.compute_similarity(resume, job)
-            scores.append(float(similarity))
+        # Get embeddings
+        resume_embedding = model.encode(resume)
+        job_embeddings = model.encode(jobs)
         
-        ranked_jobs = sorted(zip(jobs, scores), key=lambda x: x[1], reverse=True)
+        # Compute similarities
+        from sentence_transformers import util
+        similarities = util.cos_sim(resume_embedding, job_embeddings)
+        
+        # Create ranked results
+        ranked_jobs = sorted(zip(jobs, similarities.tolist()), key=lambda x: x[1], reverse=True)
         
         return {
             "status": "success",
             "resume": resume,
             "ranked_jobs": [
-                {"job": job, "similarity_score": score} 
+                {"job": job, "similarity_score": float(score)} 
                 for job, score in ranked_jobs
             ],
-            "engine": "sklearn-tfidf"
+            "engine": "sentence-transformers-patched"
         }
     except Exception as e:
         return {"status": "error", "message": str(e)}
 
 @app.get("/")
 def root():
-    return {"message": "Job Ranking API is running", "engine": "sklearn-tfidf"}
+    return {"message": "Job Ranking API is running", "engine": "sentence-transformers-patched"}
