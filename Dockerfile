@@ -19,7 +19,6 @@ ARG CACHE_BUST=1
 
 # Install Python dependencies (force fresh + correct versions)
 COPY requirements.txt .
-
 RUN pip install --no-cache-dir --upgrade pip && \
     pip install --no-cache-dir --upgrade -r requirements.txt
 
