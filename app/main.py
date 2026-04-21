@@ -1,11 +1,13 @@
-# Import guard for huggingface_hub cached_download compatibility
-import huggingface_hub
-from huggingface_hub import hf_hub_download
+import sys
+import logging
 
-# This manually re-links the old name to the new function 
-# to stop the ImportError before it happens.
-if not hasattr(huggingface_hub, 'cached_download'):
-    huggingface_hub.cached_download = hf_hub_download
+# 1. Fix the HuggingFace Import Error prominently
+try:
+    import huggingface_hub
+    from huggingface_hub import hf_hub_download
+    setattr(huggingface_hub, 'cached_download', hf_hub_download)
+except ImportError:
+    logging.warning("huggingface_hub not found, skipping shim.")
 
 """FastAPI service for job-match inference."""
 
