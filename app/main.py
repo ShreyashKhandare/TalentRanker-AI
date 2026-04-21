@@ -115,13 +115,13 @@ app = FastAPI(
 )
 
 # Mount static files
-app.mount("/static", StaticFiles(directory="static"), name="static")
+app.mount("/static", StaticFiles(directory="/app/static"), name="static")
 
 @app.get("/", response_class=HTMLResponse)
 async def read_root():
     """Serve the frontend index.html."""
     from fastapi.responses import HTMLResponse
-    with open("static/index.html", "r", encoding="utf-8") as f:
+    with open("/app/static/index.html", "r", encoding="utf-8") as f:
         return HTMLResponse(content=f.read())
 
 
