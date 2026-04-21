@@ -1,12 +1,21 @@
+# --- PRE-FLIGHT SHIM: MUST BE FIRST ---
+import sys
+import logging
+
+# Fix huggingface_hub BEFORE any other imports
+try:
+    import huggingface_hub
+    from huggingface_hub import hf_hub_download
+    # Force the attribute to exist
+    huggingface_hub.cached_download = hf_hub_download
+    logging.info("huggingface_hub shim applied successfully")
+except Exception as e:
+    logging.error(f"huggingface_hub shim failed: {e}")
+    sys.exit(1)
+# -----------------------------------
+
 import logging
 from fastapi import FastAPI
-
-# --- PRE-FLIGHT SHIM: Fixes the 'cached_download' ImportError ---
-import huggingface_hub
-from huggingface_hub import hf_hub_download
-if not hasattr(huggingface_hub, 'cached_download'):
-    huggingface_hub.cached_download = hf_hub_download
-# ---------------------------------------------------------------
 
 from sentence_transformers import SentenceTransformer
 
