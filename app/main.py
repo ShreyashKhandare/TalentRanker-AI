@@ -1,22 +1,37 @@
-# --- PRE-FLIGHT SHIM: MUST BE FIRST ---
+# --- AGGRESSIVE PRE-FLIGHT SHIM: MUST BE FIRST ---
 import sys
-import logging
+import importlib
 
-# Fix huggingface_hub BEFORE any other imports
-try:
-    import huggingface_hub
-    from huggingface_hub import hf_hub_download
-    # Force the attribute to exist
-    huggingface_hub.cached_download = hf_hub_download
-    logging.info("huggingface_hub shim applied successfully")
-except Exception as e:
-    logging.error(f"huggingface_hub shim failed: {e}")
+# Monkey patch huggingface_hub at the module level
+def patch_huggingface_hub():
+    """Aggressively patch huggingface_hub to add cached_download"""
+    try:
+        # Import the module
+        import huggingface_hub
+        from huggingface_hub import hf_hub_download
+        
+        # Force the attribute to exist at module level
+        huggingface_hub.cached_download = hf_hub_download
+        
+        # Also patch it in sys.modules to ensure it's available everywhere
+        sys.modules['huggingface_hub'].cached_download = hf_hub_download
+        
+        print("AGGRESSIVE PATCH: huggingface_hub.cached_download = hf_hub_download")
+        return True
+    except Exception as e:
+        print(f"AGGRESSIVE PATCH FAILED: {e}")
+        return False
+
+# Apply the patch immediately
+if not patch_huggingface_hub():
+    print("CRITICAL: Could not patch huggingface_hub - exiting")
     sys.exit(1)
-# -----------------------------------
+# ---------------------------------------------------
 
 import logging
 from fastapi import FastAPI
 
+# Now import sentence_transformers - it should find the patched cached_download
 from sentence_transformers import SentenceTransformer
 
 app = FastAPI(title="Job Ranking Engine")
