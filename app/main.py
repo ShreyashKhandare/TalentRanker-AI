@@ -1,57 +1,71 @@
-# --- AGGRESSIVE PRE-FLIGHT SHIM: MUST BE FIRST ---
-import sys
-import importlib
-
-# Monkey patch huggingface_hub at the module level
-def patch_huggingface_hub():
-    """Aggressively patch huggingface_hub to add cached_download"""
-    try:
-        # Import the module
-        import huggingface_hub
-        from huggingface_hub import hf_hub_download
-        
-        # Force the attribute to exist at module level
-        huggingface_hub.cached_download = hf_hub_download
-        
-        # Also patch it in sys.modules to ensure it's available everywhere
-        sys.modules['huggingface_hub'].cached_download = hf_hub_download
-        
-        print("AGGRESSIVE PATCH: huggingface_hub.cached_download = hf_hub_download")
-        return True
-    except Exception as e:
-        print(f"AGGRESSIVE PATCH FAILED: {e}")
-        return False
-
-# Apply the patch immediately
-if not patch_huggingface_hub():
-    print("CRITICAL: Could not patch huggingface_hub - exiting")
-    sys.exit(1)
-# ---------------------------------------------------
-
+# --- NUCLEAR FIX: AVOID sentence_transformers COMPLETELY ---
 import logging
 from fastapi import FastAPI
+import numpy as np
+from typing import List
 
-# Now import sentence_transformers - it should find the patched cached_download
-from sentence_transformers import SentenceTransformer
+# Use sklearn's TF-IDF instead of sentence-transformers to avoid huggingface_hub issues
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.metrics.pairwise import cosine_similarity
+
+print("NUCLEAR FIX: Using sklearn TF-IDF instead of sentence-transformers")
+
+class SimpleEmbedder:
+    """Replacement for SentenceTransformer using sklearn TF-IDF"""
+    def __init__(self, model_name: str = None):
+        self.vectorizer = TfidfVectorizer(
+            max_features=1000,
+            stop_words='english',
+            ngram_range=(1, 2)
+        )
+        self.fitted = False
+        
+    def encode(self, texts: List[str]):
+        """Encode texts using TF-IDF"""
+        if not self.fitted:
+            self.vectorizer.fit(texts)
+            self.fitted = True
+        return self.vectorizer.transform(texts).toarray()
+        
+    def compute_similarity(self, text1: str, text2: str):
+        """Compute cosine similarity between two texts"""
+        embeddings = self.encode([text1, text2])
+        return cosine_similarity([embeddings[0]], [embeddings[1]])[0][0]
+
+# Initialize our simple embedder
+model = SimpleEmbedder()
+print("NUCLEAR FIX: Simple embedder initialized successfully")
 
 app = FastAPI(title="Job Ranking Engine")
 
-# Load model globally so it stays in RAM
-# Use a small model like 'all-MiniLM-L6-v2' to stay within Render's RAM limits
-try:
-    model = SentenceTransformer('all-MiniLM-L6-v2')
-except Exception as e:
-    logging.error(f"Model load failed: {e}")
-    model = None
-
 @app.get("/health")
 def health():
-    return {"status": "online", "model_loaded": model is not None}
+    return {"status": "online", "model_loaded": model is not None, "engine": "sklearn-tfidf"}
 
 @app.post("/rank")
 async def rank_jobs(resume: str, jobs: list[str]):
-    # Your ranking logic here
-    return {"message": "Ranking logic active"}
+    """Rank jobs using TF-IDF similarity instead of sentence-transformers"""
+    try:
+        # Compute similarity scores using our simple embedder
+        scores = []
+        for job in jobs:
+            similarity = model.compute_similarity(resume, job)
+            scores.append(float(similarity))
+        
+        # Create ranked results
+        ranked_jobs = sorted(zip(jobs, scores), key=lambda x: x[1], reverse=True)
+        
+        return {
+            "status": "success",
+            "resume": resume,
+            "ranked_jobs": [
+                {"job": job, "similarity_score": score} 
+                for job, score in ranked_jobs
+            ],
+            "engine": "sklearn-tfidf"
+        }
+    except Exception as e:
+        return {"status": "error", "message": str(e)}
 
 
 

@@ -3,9 +3,7 @@ uvicorn[standard]
 # Force the CPU version of torch to save 1GB+ of disk space
 --extra-index-url https://download.pytorch.org/whl/cpu
 # Use known working combination
-sentence-transformers==2.2.2
 transformers==4.28.1
-huggingface_hub==0.14.1
 torch==2.0.1
 xgboost
 pandas
