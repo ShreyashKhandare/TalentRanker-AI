@@ -239,203 +239,201 @@
                     in progress...</p>
             </div>
         </div>
-    </div>
 
-    <script>
-        // Use your existing JavaScript logic here, it remains fully compatible.
-        // Ensure you keep your toggleTheme and analyzeMatch functions!
+        <script>
+            console.log("JS LOADED");
 
-        function toggleTheme() {
-            const currentTheme = document.documentElement.getAttribute('data-theme');
-            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
-            document.documentElement.setAttribute('data-theme', newTheme);
-            localStorage.setItem('theme', newTheme);
-            updateIcons(newTheme);
-        }
-
-        function updateIcons(theme) {
-            const darkIcon = document.getElementById('theme-icon-dark');
-            const lightIcon = document.getElementById('theme-icon-light');
-            if (theme === 'light') {
-                darkIcon.classList.add('hidden');
-                lightIcon.classList.remove('hidden');
-            } else {
-                darkIcon.classList.remove('hidden');
-                lightIcon.classList.add('hidden');
-            }
-        }
-
-        // Initialize theme
-        const savedTheme = localStorage.getItem('theme') || 'dark';
-        document.documentElement.setAttribute('data-theme', savedTheme);
-        updateIcons(savedTheme);
-
-        let uploadedPDF = null;
-
-        async function handlePDFUpload(event) {
-            const file = event.target.files[0];
-            if (!file) return;
-
-            if (!file.name.toLowerCase().endsWith('.pdf')) {
-                alert('Please select a PDF file only.');
-                event.target.value = '';
-                return;
+            function toggleTheme() {
+                const currentTheme = document.documentElement.getAttribute('data-theme');
+                const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+                document.documentElement.setAttribute('data-theme', newTheme);
+                localStorage.setItem('theme', newTheme);
+                updateIcons(newTheme);
             }
 
-            // Update UI to show selected file
-            document.getElementById('pdf-filename').textContent = file.name;
-            document.getElementById('pdf-info').classList.remove('hidden');
+            function updateIcons(theme) {
+                const darkIcon = document.getElementById('theme-icon-dark');
+                const lightIcon = document.getElementById('theme-icon-light');
+                if (theme === 'light') {
+                    darkIcon.classList.add('hidden');
+                    lightIcon.classList.remove('hidden');
+                } else {
+                    darkIcon.classList.remove('hidden');
+                    lightIcon.classList.add('hidden');
+                }
+            }
 
-            const formData = new FormData();
-            formData.append('file', file);
+            // Initialize theme
+            const savedTheme = localStorage.getItem('theme') || 'dark';
+            document.documentElement.setAttribute('data-theme', savedTheme);
+            updateIcons(savedTheme);
 
-            try {
-                // Show loading state
-                const uploadArea = document.getElementById('pdf-upload');
-                uploadArea.classList.add('opacity-50');
-                uploadArea.disabled = true;
+            let uploadedPDF = null;
 
-                const response = await fetch('/rank', {
-                    method: 'POST',
-                    body: formData
-                });
+            async function handlePDFUpload(event) {
+                const file = event.target.files[0];
+                if (!file) return;
 
-                const data = await response.json();
-
-                console.log('API response:', data);
-
-                if (data.error) {
-                    alert(data.error);
+                if (!file.name.toLowerCase().endsWith('.pdf')) {
+                    alert('Please select a PDF file only.');
+                    event.target.value = '';
                     return;
                 }
 
-                // Show success feedback
-                uploadArea.classList.add('border-green-500');
-                setTimeout(() => {
-                    uploadArea.classList.remove('border-green-500');
-                }, 2000);
+                // Update UI to show selected file
+                document.getElementById('pdf-filename').textContent = file.name;
+                document.getElementById('pdf-info').classList.remove('hidden');
 
-                // Extract and display resume text if available
-                if (data.extracted_text) {
-                    document.getElementById('resume').value = data.extracted_text;
-                    console.log('PDF text extracted successfully:', data.extracted_text.substring(0, 100) + '...');
-                } else {
-                    console.log('PDF upload successful but no text extracted');
+                const formData = new FormData();
+                formData.append('file', file);
+
+                try {
+                    // Show loading state
+                    const uploadArea = document.getElementById('pdf-upload');
+                    uploadArea.classList.add('opacity-50');
+                    uploadArea.disabled = true;
+
+                    const response = await fetch('/rank', {
+                        method: 'POST',
+                        body: formData
+                    });
+
+                    const data = await response.json();
+
+                    console.log('API response:', data);
+
+                    if (data.error) {
+                        alert(data.error);
+                        return;
+                    }
+
+                    // Show success feedback
+                    uploadArea.classList.add('border-green-500');
+                    setTimeout(() => {
+                        uploadArea.classList.remove('border-green-500');
+                    }, 2000);
+
+                    // Extract and display resume text if available
+                    if (data.extracted_text) {
+                        document.getElementById('resume').value = data.extracted_text;
+                        console.log('PDF text extracted successfully:', data.extracted_text.substring(0, 100) + '...');
+                    } else {
+                        console.log('PDF upload successful but no text extracted');
+                    }
+                } catch (error) {
+                    alert('Error uploading PDF: ' + error.message);
+                } finally {
+                    // Reset loading state
+                    const uploadArea = document.getElementById('pdf-upload');
+                    uploadArea.classList.remove('opacity-50');
+                    uploadArea.disabled = false;
                 }
-            } catch (error) {
-                alert('Error uploading PDF: ' + error.message);
-            } finally {
-                // Reset loading state
+            }
+
+            function clearPDF() {
+                // Reset file input
+                document.getElementById('pdf-upload').value = '';
+
+                // Hide PDF info
+                document.getElementById('pdf-info').classList.add('hidden');
+
+                // Clear resume textarea
+                document.getElementById('resume').value = '';
+
+                // Reset upload area state
                 const uploadArea = document.getElementById('pdf-upload');
                 uploadArea.classList.remove('opacity-50');
                 uploadArea.disabled = false;
-            }
-        }
+                uploadArea.classList.remove('border-green-500');
 
-        function clearPDF() {
-            // Reset file input
-            document.getElementById('pdf-upload').value = '';
-
-            // Hide PDF info
-            document.getElementById('pdf-info').classList.add('hidden');
-
-            // Clear resume textarea
-            document.getElementById('resume').value = '';
-
-            // Reset upload area state
-            const uploadArea = document.getElementById('pdf-upload');
-            uploadArea.classList.remove('opacity-50');
-            uploadArea.disabled = false;
-            uploadArea.classList.remove('border-green-500');
-
-            // Reset global variable
-            uploadedPDF = null;
-        }
-
-        function clearJobDescription() {
-            document.getElementById('job').value = '';
-            // Focus on the cleared textarea for better UX
-            document.getElementById('job').focus();
-        }
-
-        async function analyzeMatch() {
-            const btn = document.getElementById('btn');
-            const loader = document.getElementById('loader');
-            const results = document.getElementById('results-container');
-
-            // UI State Change
-            btn.disabled = true;
-            loader.classList.remove('hidden');
-            results.classList.add('hidden');
-
-            const payload = {
-                resume: document.getElementById('resume').value,
-                jobs: [document.getElementById('job').value]
-            };
-
-            try {
-                const response = await fetch('/rank', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload)
-                });
-                const data = await response.json();
-
-                displayResults(data);
-            } catch (err) {
-                alert("Server connection failed. Check if API is running!");
-            } finally {
-                btn.disabled = false;
-                loader.classList.add('hidden');
-            }
-        }
-
-        function displayResults(data) {
-            const results = document.getElementById('results-container');
-            const badge = document.getElementById('verdict-badge');
-
-            results.classList.remove('hidden');
-
-            // Use the match_score from API response
-            const score = data.match_score || 0;
-            document.getElementById('score-val').innerText = (score * 100).toFixed(1) + "%";
-            document.getElementById('explanation').innerText = data.explanation || "Analysis completed successfully.";
-
-            // Badge Color
-            if (score > 0.8) {
-                badge.className = "px-5 py-1.5 rounded-full text-[10px] font-black uppercase tracking-tighter bg-emerald-500/20 text-emerald-600 border border-emerald-500/30";
-                badge.innerText = "STRONG MATCH";
-            } else if (score > 0.6) {
-                badge.className = "px-5 py-1.5 rounded-full text-[10px] font-black uppercase tracking-tighter bg-amber-500/20 text-amber-600 border border-amber-500/30";
-                badge.innerText = "GOOD MATCH";
-            } else {
-                badge.className = "px-5 py-1.5 rounded-full text-[10px] font-black uppercase tracking-tighter bg-red-500/20 text-red-600 border border-red-500/30";
-                badge.innerText = "WEAK MATCH";
+                // Reset global variable
+                uploadedPDF = null;
             }
 
-            // Render Progress Bars with real API data
-            const contribContainer = document.getElementById('contributions');
-            contribContainer.innerHTML = '';
+            function clearJobDescription() {
+                document.getElementById('job').value = '';
+                // Focus on the cleared textarea for better UX
+                document.getElementById('job').focus();
+            }
 
-            // Use real feature contributions from API response
-            const features = data.feature_contributions || {};
+            async function analyzeMatch() {
+                const btn = document.getElementById('btn');
+                const loader = document.getElementById('loader');
+                const results = document.getElementById('results-container');
 
-            for (const [key, value] of Object.entries(features)) {
-                const label = key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
-                contribContainer.innerHTML += `
-                    <div>
-                        <div class="flex justify-between text-[10px] uppercase font-bold text-slate-400 mb-1">
-                            <span>${label}</span>
-                            <span>${(value * 100).toFixed(1)}%</span>
+                // UI State Change
+                btn.disabled = true;
+                loader.classList.remove('hidden');
+                results.classList.add('hidden');
+
+                const payload = {
+                    resume: document.getElementById('resume').value,
+                    jobs: [document.getElementById('job').value]
+                };
+
+                try {
+                    const response = await fetch('/rank', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+                    const data = await response.json();
+
+                    displayResults(data);
+                } catch (err) {
+                    alert("Server connection failed. Check if API is running!");
+                } finally {
+                    btn.disabled = false;
+                    loader.classList.add('hidden');
+                }
+            }
+
+            function displayResults(data) {
+                const results = document.getElementById('results-container');
+                const badge = document.getElementById('verdict-badge');
+
+                results.classList.remove('hidden');
+
+                // Use the match_score from API response
+                const score = data.match_score || 0;
+                document.getElementById('score-val').innerText = (score * 100).toFixed(1) + "%";
+                document.getElementById('explanation').innerText = data.explanation || "Analysis completed successfully.";
+
+                // Badge Color
+                if (score > 0.8) {
+                    badge.className = "px-5 py-1.5 rounded-full text-[10px] font-black uppercase tracking-tighter bg-emerald-500/20 text-emerald-600 border border-emerald-500/30";
+                    badge.innerText = "STRONG MATCH";
+                } else if (score > 0.6) {
+                    badge.className = "px-5 py-1.5 rounded-full text-[10px] font-black uppercase tracking-tighter bg-amber-500/20 text-amber-600 border border-amber-500/30";
+                    badge.innerText = "GOOD MATCH";
+                } else {
+                    badge.className = "px-5 py-1.5 rounded-full text-[10px] font-black uppercase tracking-tighter bg-red-500/20 text-red-600 border border-red-500/30";
+                    badge.innerText = "WEAK MATCH";
+                }
+
+                // Render Progress Bars with real API data
+                const contribContainer = document.getElementById('contributions');
+                contribContainer.innerHTML = '';
+
+                // Use real feature contributions from API response
+                const features = data.feature_contributions || {};
+
+                for (const [key, value] of Object.entries(features)) {
+                    const label = key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+                    contribContainer.innerHTML += `
+                        <div>
+                            <div class="flex justify-between text-[10px] uppercase font-bold text-slate-400 mb-1">
+                                <span>${label}</span>
+                                <span>${(value * 100).toFixed(1)}%</span>
+                            </div>
+                            <div class="w-full bg-slate-200 rounded-full h-2">
+                                <div class="bg-indigo-500 h-2 rounded-full transition-all duration-1000" style="width: ${value * 100}%"></div>
+                            </div>
                         </div>
-                        <div class="w-full bg-slate-200 rounded-full h-2">
-                            <div class="bg-indigo-500 h-2 rounded-full transition-all duration-1000" style="width: ${value * 100}%"></div>
-                        </div>
-                    </div>
-                `;
+                    `;
+                }
             }
-        }
-    </script>
+        </script>
 </body>
 
 </html>
