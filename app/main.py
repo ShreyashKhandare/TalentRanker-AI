@@ -256,8 +256,21 @@ async def rank_jobs(resume: str = None, jobs: List[str] = None, file: UploadFile
     """Perfect job ranking with comprehensive optimizations"""
     try:
         # Handle PDF file upload
+        extracted_text = None
         if file and file.filename.lower().endswith('.pdf'):
-            resume = extract_text_from_pdf(file)
+            extracted_text = extract_text_from_pdf(file)
+            resume = extracted_text
+            
+            # If only PDF is uploaded and no jobs, return extracted text
+            if not jobs or len(jobs) == 0:
+                return JSONResponse(
+                    status_code=200,
+                    content={
+                        "status": "success",
+                        "extracted_text": extracted_text,
+                        "message": "PDF text extracted successfully"
+                    }
+                )
         elif not resume:
             # Input validation
             if not resume or not resume.strip():
