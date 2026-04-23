@@ -219,9 +219,10 @@ def extract_text_from_pdf(pdf_file: UploadFile) -> str:
                     if page_text:
                         text += page_text + "\n"
                 if text.strip():
+                    logger.info(f"Successfully extracted text using pdfplumber: {len(text)} characters")
                     return text.strip()
         except Exception as e:
-            print(f"pdfplumber failed: {e}")
+            logger.error(f"pdfplumber failed: {e}")
         
         # Fallback to PyPDF2
         try:
@@ -233,14 +234,21 @@ def extract_text_from_pdf(pdf_file: UploadFile) -> str:
                 page_text = page.extract_text()
                 if page_text:
                     text += page_text + "\n"
-            return text.strip()
+            if text.strip():
+                logger.info(f"Successfully extracted text using PyPDF2: {len(text)} characters")
+                    return text.strip()
         except Exception as e:
-            print(f"PyPDF2 failed: {e}")
+            logger.error(f"PyPDF2 failed: {e}")
         
-        return ""
+        if not text.strip():
+            logger.error("PDF extraction failed: No text could be extracted from PDF")
+            return ""
+        
+        logger.info(f"PDF extraction completed: {len(text)} characters extracted")
+        return text
         
     except Exception as e:
-        print(f"PDF extraction error: {e}")
+        logger.error(f"PDF extraction error: {e}")
         return ""
 
 @app.post("/rank")
