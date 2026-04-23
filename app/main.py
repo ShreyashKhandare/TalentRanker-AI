@@ -259,16 +259,9 @@ async def rank_jobs(resume: str = None, jobs: List[str] = None, file: UploadFile
         if file and file.filename.lower().endswith('.pdf'):
             resume = extract_text_from_pdf(file)
         elif not resume:
-            raise HTTPException(status_code=400, detail="Resume text cannot be empty")
-        
-        # Input validation
-        if not jobs or len(jobs) == 0:
-            raise HTTPException(status_code=400, detail="Jobs list cannot be empty")
-    """Perfect job ranking with comprehensive optimizations"""
-    try:
-        # Input validation
-        if not resume or not resume.strip():
-            raise HTTPException(status_code=400, detail="Resume text cannot be empty")
+            # Input validation
+            if not resume or not resume.strip():
+                raise HTTPException(status_code=400, detail="Resume text cannot be empty")
             
         if not jobs or len(jobs) == 0:
             raise HTTPException(status_code=400, detail="Jobs list cannot be empty")
