@@ -236,7 +236,7 @@ def extract_text_from_pdf(pdf_file: UploadFile) -> str:
                     text += page_text + "\n"
             if text.strip():
                 logger.info(f"Successfully extracted text using PyPDF2: {len(text)} characters")
-                    return text.strip()
+                return text.strip()
         except Exception as e:
             logger.error(f"PyPDF2 failed: {e}")
         
