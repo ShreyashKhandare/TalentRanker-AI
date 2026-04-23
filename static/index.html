@@ -296,33 +296,21 @@
                     body: formData
                 });
 
-                const data = await response.json();
-
-                if (data.extracted_text) {
-                    // Fill the resume textarea with extracted text
-                    document.getElementById('resume').value = data.extracted_text;
-
-                    // Show PDF info
-                    document.getElementById('pdf-filename').textContent = file.name;
-                    document.getElementById('pdf-info').classList.remove('hidden');
-
-                    uploadedPDF = file;
-
-                    // Show success feedback
-                    uploadArea.classList.add('border-green-500');
-                    setTimeout(() => {
-                        uploadArea.classList.remove('border-green-500');
-                    }, 2000);
-                } else {
-                    alert('Error extracting text from PDF');
-                }
-            } catch (error) {
-                alert('Error uploading PDF: ' + error.message);
-            } finally {
-                // Reset loading state
-                uploadArea.classList.remove('opacity-50');
-                uploadArea.disabled = false;
+                // Show success feedback
+                uploadArea.classList.add('border-green-500');
+                setTimeout(() => {
+                    uploadArea.classList.remove('border-green-500');
+                }, 2000);
+            } else {
+                alert('Error extracting text from PDF');
             }
+        } catch (error) {
+            alert('Error uploading PDF: ' + error.message);
+        } finally {
+            // Reset loading state
+            uploadArea.classList.remove('opacity-50');
+            uploadArea.disabled = false;
+        }
         }
 
         function clearPDF() {
@@ -362,8 +350,8 @@
             results.classList.add('hidden');
 
             const payload = {
-                job_description: document.getElementById('job').value,
-                resume_text: document.getElementById('resume').value
+                resume: document.getElementById('resume').value,
+                jobs: [document.getElementById('job').value]
             };
 
             try {
