@@ -291,7 +291,7 @@
                 uploadArea.classList.add('opacity-50');
                 uploadArea.disabled = true;
 
-                const response = await fetch('/extract-resume-text', {
+                const response = await fetch('/rank', {
                     method: 'POST',
                     body: formData
                 });
@@ -367,7 +367,7 @@
             };
 
             try {
-                const response = await fetch('/match-job', {
+                const response = await fetch('/rank', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(payload)
