@@ -203,52 +203,31 @@ def health():
             content={"status": "error", "message": "Service unavailable"}
         )
 
-def extract_text_from_pdf(pdf_file: UploadFile) -> str:
-    """Extract text from uploaded PDF file using multiple methods for better accuracy."""
+import io
+import PyPDF2
+
+def extract_text_from_pdf(upload_file: UploadFile) -> str:
     try:
-        # Read PDF content
-        pdf_content = pdf_file.file.read()
-        
-        # Try pdfplumber first (better for modern PDFs)
-        try:
-            import pdfplumber
-            with pdfplumber.open(pdf_file.file) as pdf:
-                text = ""
-                for page in pdf.pages:
-                    page_text = page.extract_text()
-                    if page_text:
-                        text += page_text + "\n"
-                if text.strip():
-                    logger.info(f"Successfully extracted text using pdfplumber: {len(text)} characters")
-                    return text.strip()
-        except Exception as e:
-            logger.error(f"pdfplumber failed: {e}")
-        
-        # Fallback to PyPDF2
-        try:
-            import PyPDF2
-            pdf_file.file.seek(0)  # Reset file pointer
-            pdf_reader = PyPDF2.PdfReader(pdf_file.file)
-            text = ""
-            for page in pdf_reader.pages:
-                page_text = page.extract_text()
-                if page_text:
-                    text += page_text + "\n"
-            if text.strip():
-                logger.info(f"Successfully extracted text using PyPDF2: {len(text)} characters")
-                return text.strip()
-        except Exception as e:
-            logger.error(f"PyPDF2 failed: {e}")
-        
-        if not text.strip():
-            logger.error("PDF extraction failed: No text could be extracted from PDF")
-            return ""
-        
-        logger.info(f"PDF extraction completed: {len(text)} characters extracted")
-        return text
-        
+        # Read file bytes safely
+        pdf_bytes = upload_file.file.read()
+        pdf_stream = io.BytesIO(pdf_bytes)
+
+        reader = PyPDF2.PdfReader(pdf_stream)
+
+        text = ""
+        for page in reader.pages:
+            page_text = page.extract_text()
+            if page_text:
+                text += page_text + "\n"
+
+        print("Extracted length:", len(text))  # DEBUG
+        logger.info(f"Extracted length: {len(text)}")
+
+        return text.strip()
+
     except Exception as e:
-        logger.error(f"PDF extraction error: {e}")
+        print("PDF extraction error:", str(e))  # DEBUG
+        logger.error(f"PDF extraction error: {str(e)}")
         return ""
 
 @app.post("/rank")
@@ -259,18 +238,17 @@ async def rank_jobs(resume: str = None, jobs: List[str] = None, file: UploadFile
         extracted_text = None
         if file and file.filename.lower().endswith('.pdf'):
             extracted_text = extract_text_from_pdf(file)
-            resume = extracted_text
-            
-            # If only PDF is uploaded and no jobs, return extracted text
+
+            if not extracted_text:
+                return {"error": "Could not extract text from PDF"}
+
+            # If only PDF is uploaded, return extracted text
             if not jobs or len(jobs) == 0:
-                return JSONResponse(
-                    status_code=200,
-                    content={
-                        "status": "success",
-                        "extracted_text": extracted_text,
-                        "message": "PDF text extracted successfully"
-                    }
-                )
+                return {
+                    "extracted_text": extracted_text
+                }
+            
+            resume = extracted_text
         elif not resume:
             # Input validation
             if not resume or not resume.strip():
