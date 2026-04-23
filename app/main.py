@@ -286,7 +286,7 @@ def root():
     """Serve HTML frontend or return API info"""
     try:
         # Try to serve HTML frontend
-        return FileResponse("./static/index.html")
+        return FileResponse("../static/index.html")
     except Exception:
         # Fallback to JSON response
         return JSONResponse(
