@@ -267,14 +267,11 @@
 
         // Initialize theme
         const savedTheme = localStorage.getItem('theme') || 'dark';
-        document.documentElement.setAttribute('data-theme', savedTheme);
-        document.addEventListener('DOMContentLoaded', () => updateIcons(savedTheme));
+            }
 
-        let uploadedPDF = null;
-
-        async function handlePDFUpload(event) {
-            const file = event.target.files[0];
-            if (!file) return;
+            .text - slate - 400,
+            .text - slate - 500 {
+            color: var(--text - muted);
 
             if (!file.name.toLowerCase().endsWith('.pdf')) {
                 alert('Please select a PDF file only.');
@@ -282,49 +279,32 @@
                 return;
             }
 
-            // Initialize theme
-            const savedTheme = localStorage.getItem('theme') || 'dark';
-            document.documentElement.setAttribute('data-theme', savedTheme);
-            document.addEventListener('DOMContentLoaded', () => updateIcons(savedTheme));
+            // Update UI to show selected file
+            document.getElementById('pdf-filename').textContent = file.name;
 
-            let uploadedPDF = null;
-
-            async function handlePDFUpload(event) {
-                const file = event.target.files[0];
-                if (!file) return;
-
-                if (!file.name.toLowerCase().endsWith('.pdf')) {
-                    alert('Please select a PDF file only.');
-                    event.target.value = '';
-                    return;
-                }
-
-                // Update UI to show selected file
-                document.getElementById('pdf-filename').textContent = file.name;
-
-                // Extract and display resume text if available
-                if (data.extracted_text) {
-                    document.getElementById('resume').value = data.extracted_text;
-                    console.log('PDF text extracted successfully:', data.extracted_text.substring(0, 100) + '...');
-                } else {
-                    console.log('PDF upload successful but no text extracted');
-                }
-            } catch (error) {
-                alert('Error uploading PDF: ' + error.message);
-            } finally {
-                // Reset loading state
-
-                // Hide PDF info
-                document.getElementById('pdf-info').classList.add('hidden');
-
-                // Clear resume textarea
-                document.getElementById('resume').value = '';
-
-                // Reset upload area state
-                const uploadArea = document.getElementById('pdf-upload');
-                uploadArea.classList.remove('opacity-50');
-                uploadArea.disabled = false;
+            // Extract and display resume text if available
+            if (data.extracted_text) {
+                document.getElementById('resume').value = data.extracted_text;
+                console.log('PDF text extracted successfully:', data.extracted_text.substring(0, 100) + '...');
+            } else {
+                console.log('PDF upload successful but no text extracted');
             }
+        } catch (error) {
+            alert('Error uploading PDF: ' + error.message);
+        } finally {
+            // Reset loading state
+
+            // Hide PDF info
+            document.getElementById('pdf-info').classList.add('hidden');
+
+            // Clear resume textarea
+            document.getElementById('resume').value = '';
+
+            // Reset upload area state
+            const uploadArea = document.getElementById('pdf-upload');
+            uploadArea.classList.remove('opacity-50');
+            uploadArea.disabled = false;
+        }
         }
 
         function clearPDF() {
