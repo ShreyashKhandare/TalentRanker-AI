@@ -282,6 +282,10 @@
                 return;
             }
 
+            // Update UI to show selected file
+            document.getElementById('pdf-filename').textContent = file.name;
+            document.getElementById('pdf-info').classList.remove('hidden');
+
             const formData = new FormData();
             formData.append('file', file);
 
