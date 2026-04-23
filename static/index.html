@@ -274,7 +274,6 @@
 
         async function handlePDFUpload(event) {
             const file = event.target.files[0];
-
             if (!file) return;
 
             if (!file.name.toLowerCase().endsWith('.pdf')) {
@@ -306,24 +305,16 @@
                 setTimeout(() => {
                     uploadArea.classList.remove('border-green-500');
                 }, 2000);
-
-                // Extract and display resume text if available
-                if (response.ok) {
-                    const data = await response.json();
-                    if (data.status === 'success' && data.extracted_text) {
-                        document.getElementById('resume').value = data.extracted_text;
-                    }
-                } else {
-                    alert('Error extracting text from PDF');
-                }
-            } catch (error) {
-                alert('Error uploading PDF: ' + error.message);
-            } finally {
-                // Reset loading state
-                const uploadArea = document.getElementById('pdf-upload');
-                uploadArea.classList.remove('opacity-50');
-                uploadArea.disabled = false;
+            } else {
+                alert('Error extracting text from PDF');
             }
+        } catch (error) {
+            alert('Error uploading PDF: ' + error.message);
+        } finally {
+            // Reset loading state
+            uploadArea.classList.remove('opacity-50');
+            uploadArea.disabled = false;
+        }
         }
 
         function clearPDF() {
@@ -390,48 +381,43 @@
 
             results.classList.remove('hidden');
 
-            if (data.status === 'success') {
-                // Use the top match score from API response
-                const topMatch = data.ranked_jobs && data.ranked_jobs[0];
-                const score = topMatch ? topMatch.similarity_score : 0;
-                document.getElementById('score-val').innerText = Math.round(score * 100) + "%";
-                document.getElementById('explanation').innerText = `Your resume shows ${Math.round(score * 100)}% compatibility with this position.`;
+            // Use the match_score from API response
+            const score = data.match_score || 0;
+            document.getElementById('score-val').innerText = (score * 100).toFixed(1) + "%";
+            document.getElementById('explanation').innerText = data.explanation || "Analysis completed successfully.";
 
-                // Badge Color
-                if (score > 0.8) {
-                    badge.className = "px-5 py-1.5 rounded-full text-[10px] font-black uppercase tracking-tighter bg-emerald-500/20 text-emerald-600 border border-emerald-500/30";
-                    badge.innerText = "STRONG MATCH";
-                } else if (score > 0.6) {
-                    badge.className = "px-5 py-1.5 rounded-full text-[10px] font-black uppercase tracking-tighter bg-amber-500/20 text-amber-600 border border-amber-500/30";
-                    badge.innerText = "GOOD MATCH";
-                } else {
-                    badge.className = "px-5 py-1.5 rounded-full text-[10px] font-black uppercase tracking-tighter bg-red-500/20 text-red-600 border border-red-500/30";
-                    badge.innerText = "WEAK MATCH";
-                }
-
-                // Render Progress Bars with ranked jobs
-                const contribContainer = document.getElementById('contributions');
-                contribContainer.innerHTML = '';
-
-                // Show top 5 ranked jobs as contributions
-                const rankedJobs = data.ranked_jobs || [];
-                rankedJobs.slice(0, 5).forEach((job, index) => {
-                    const jobLabel = `Job ${index + 1}`;
-                    const jobScore = job.similarity_score;
-                    contribContainer.innerHTML += `
-                        <div>
-                            <div class="flex justify-between text-[10px] uppercase font-bold text-slate-400 mb-1">
-                                <span>${jobLabel}</span>
-                                <span>${Math.round(jobScore * 100)}%</span>
-                            </div>
-                            <div class="w-full bg-slate-200 rounded-full h-2">
-                                <div class="bg-indigo-500 h-2 rounded-full transition-all duration-1000" style="width: ${jobScore * 100}%"></div>
-                            </div>
-                        </div>
-                    `;
-                });
+            // Badge Color
+            if (score > 0.8) {
+                badge.className = "px-5 py-1.5 rounded-full text-[10px] font-black uppercase tracking-tighter bg-emerald-500/20 text-emerald-600 border border-emerald-500/30";
+                badge.innerText = "STRONG MATCH";
+            } else if (score > 0.6) {
+                badge.className = "px-5 py-1.5 rounded-full text-[10px] font-black uppercase tracking-tighter bg-amber-500/20 text-amber-600 border border-amber-500/30";
+                badge.innerText = "GOOD MATCH";
             } else {
-                alert('Error processing request: ' + (data.message || 'Unknown error'));
+                badge.className = "px-5 py-1.5 rounded-full text-[10px] font-black uppercase tracking-tighter bg-red-500/20 text-red-600 border border-red-500/30";
+                badge.innerText = "WEAK MATCH";
+            }
+
+            // Render Progress Bars with real API data
+            const contribContainer = document.getElementById('contributions');
+            contribContainer.innerHTML = '';
+
+            // Use real feature contributions from API response
+            const features = data.feature_contributions || {};
+
+            for (const [key, value] of Object.entries(features)) {
+                const label = key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+                contribContainer.innerHTML += `
+                    <div>
+                        <div class="flex justify-between text-[10px] uppercase font-bold text-slate-400 mb-1">
+                            <span>${label}</span>
+                            <span>${(value * 100).toFixed(1)}%</span>
+                        </div>
+                        <div class="w-full bg-slate-200 rounded-full h-2">
+                            <div class="bg-indigo-500 h-2 rounded-full transition-all duration-1000" style="width: ${value * 100}%"></div>
+                        </div>
+                    </div>
+                `;
             }
         }
     </script>
