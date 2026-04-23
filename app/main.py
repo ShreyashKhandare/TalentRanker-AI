@@ -282,18 +282,15 @@ async def rank_jobs(resume: str, jobs: List[str]):
                 "engine": "sklearn-tfidf-perfect"
             }
         )
-
-@app.get("/")
 def root():
     """Serve HTML frontend or return API info"""
     try:
-        # Try to serve the HTML frontend
-        return FileResponse("static/index.html")
+        # Try to serve HTML frontend
+        return FileResponse("./static/index.html")
     except Exception:
         # Fallback to JSON response
         return JSONResponse(
             status_code=200,
-            content={
                 "message": "Perfect Job Ranking API is running",
                 "engine": "sklearn-tfidf-perfect",
                 "version": "2.0.0",
