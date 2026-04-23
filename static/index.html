@@ -301,60 +301,18 @@
 
                 // Update UI to show selected file
                 document.getElementById('pdf-filename').textContent = file.name;
-                document.getElementById('pdf-info').classList.remove('hidden');
 
-                const formData = new FormData();
-                formData.append('file', file);
-
-                try {
-                    // Show loading state
-                    const uploadArea = document.getElementById('pdf-upload');
-                    uploadArea.classList.add('opacity-50');
-                    uploadArea.disabled = true;
-
-                    const response = await fetch('/rank', {
-                        method: 'POST',
-                        body: formData
-                    });
-
-                    if (response.ok) {
-                        const data = await response.json();
-
-                        // Show success feedback
-                        uploadArea.classList.add('border-green-500');
-                        setTimeout(() => {
-                            uploadArea.classList.remove('border-green-500');
-                        }, 2000);
-
-                        // Extract and display resume text if available
-                        if (data.status === 'success' && data.extracted_text) {
-                            document.getElementById('resume').value = data.extracted_text;
-                            console.log('PDF text extracted successfully:', data.extracted_text.substring(0, 100) + '...');
-                        } else if (data.status === 'success' && data.ranked_jobs) {
-                            // This is a full ranking request, extract text from the resume field
-                            if (data.resume) {
-                                document.getElementById('resume').value = data.resume;
-                                console.log('Resume text from ranking response:', data.resume.substring(0, 100) + '...');
-                            }
-                        } else {
-                            console.log('PDF upload successful but no text extracted');
-                        }
-                    } else {
-                        alert('Error extracting text from PDF');
-                    }
-                } catch (error) {
-                    alert('Error uploading PDF: ' + error.message);
-                } finally {
-                    // Reset loading state
-                    const uploadArea = document.getElementById('pdf-upload');
-                    uploadArea.classList.remove('opacity-50');
-                    uploadArea.disabled = false;
+                // Extract and display resume text if available
+                if (data.extracted_text) {
+                    document.getElementById('resume').value = data.extracted_text;
+                    console.log('PDF text extracted successfully:', data.extracted_text.substring(0, 100) + '...');
+                } else {
+                    console.log('PDF upload successful but no text extracted');
                 }
-            }
-
-            function clearPDF() {
-                // Reset file input
-                document.getElementById('pdf-upload').value = '';
+            } catch (error) {
+                alert('Error uploading PDF: ' + error.message);
+            } finally {
+                // Reset loading state
 
                 // Hide PDF info
                 document.getElementById('pdf-info').classList.add('hidden');

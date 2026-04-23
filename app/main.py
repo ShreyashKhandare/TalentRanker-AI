@@ -203,31 +203,28 @@ def health():
             content={"status": "error", "message": "Service unavailable"}
         )
 
+import pdfplumber
 import io
-import PyPDF2
 
 def extract_text_from_pdf(upload_file: UploadFile) -> str:
     try:
-        # Read file bytes safely
         pdf_bytes = upload_file.file.read()
         pdf_stream = io.BytesIO(pdf_bytes)
 
-        reader = PyPDF2.PdfReader(pdf_stream)
-
         text = ""
-        for page in reader.pages:
-            page_text = page.extract_text()
-            if page_text:
-                text += page_text + "\n"
 
-        print("Extracted length:", len(text))  # DEBUG
-        logger.info(f"Extracted length: {len(text)}")
+        with pdfplumber.open(pdf_stream) as pdf:
+            for page in pdf.pages:
+                page_text = page.extract_text()
+                if page_text:
+                    text += page_text + "\n"
+
+        print("Extracted length:", len(text))
 
         return text.strip()
 
     except Exception as e:
-        print("PDF extraction error:", str(e))  # DEBUG
-        logger.error(f"PDF extraction error: {str(e)}")
+        print("PDF extraction error:", str(e))
         return ""
 
 @app.post("/rank")
@@ -240,7 +237,9 @@ async def rank_jobs(resume: str = None, jobs: List[str] = None, file: UploadFile
             extracted_text = extract_text_from_pdf(file)
 
             if not extracted_text:
-                return {"error": "Could not extract text from PDF"}
+                return {
+                    "error": "Could not extract text. PDF may be scanned or unsupported."
+                }
 
             # If only PDF is uploaded, return extracted text
             if not jobs or len(jobs) == 0:
