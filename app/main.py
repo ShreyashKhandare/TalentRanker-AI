@@ -2,8 +2,9 @@ import logging
 import sys
 import traceback
 from fastapi import FastAPI, HTTPException
-from fastapi.responses import JSONResponse, FileResponse
+from fastapi.responses import JSONResponse, FileResponse, HTMLResponse
 from fastapi.staticfiles import StaticFiles
+import os
 import numpy as np
 from typing import List, Dict, Any
 import time
@@ -282,45 +283,16 @@ async def rank_jobs(resume: str, jobs: List[str]):
                 "engine": "sklearn-tfidf-perfect"
             }
         )
-def root():
-    """Serve HTML frontend or return API info"""
-    try:
-        # Try to serve HTML frontend
-        return FileResponse("../static/index.html")
-    except Exception:
-        # Fallback to JSON response
-        return JSONResponse(
-            status_code=200,
-            content={
-                "message": "Perfect Job Ranking API is running",
-                "engine": "sklearn-tfidf-perfect",
-                "version": "2.0.0",
-                "status": "production-ready",
-                "features": [
-                    "Enhanced TF-IDF text similarity",
-                    "Intelligent caching system",
-                    "Comprehensive error handling",
-                    "Request logging and monitoring",
-                    "Input validation and sanitization",
-                    "Performance metrics",
-                    "Production-ready health checks",
-                    "Optimized for Render deployment"
-                ],
-                "endpoints": {
-                    "health": "/health",
-                    "rank": "/rank (POST)",
-                    "docs": "/docs",
-                    "redoc": "/redoc",
-                    "metrics": "/metrics"
-                },
-                "performance": {
-                    "max_jobs_per_request": 100,
-                    "cache_enabled": True,
-                    "logging_enabled": True,
-                    "monitoring_enabled": True
-                }
-            }
-        )
+@app.get("/", response_class=HTMLResponse)
+def serve_ui():
+    """Serve HTML frontend definitively"""
+    file_path = os.path.join(os.getcwd(), "static", "index.html")
+    
+    if not os.path.exists(file_path):
+        return {"error": f"File not found at {file_path}"}
+    
+    with open(file_path, "r", encoding="utf-8") as f:
+        return f.read()
 
 @app.get("/metrics")
 def metrics():
