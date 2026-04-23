@@ -139,9 +139,6 @@ except Exception as e:
     logger.critical(f"Failed to initialize model: {e}")
     sys.exit(1)
 
-# Mount static files
-app.mount("/static", StaticFiles(directory="static", html=True), name="static")
-
 app = FastAPI(
     title="Perfect Job Ranking Engine",
     description="Production-perfect TF-IDF text similarity API with optimizations",
@@ -149,6 +146,9 @@ app = FastAPI(
     docs_url="/docs",
     redoc_url="/redoc"
 )
+
+# Mount static files AFTER app creation
+app.mount("/static", StaticFiles(directory="static", html=True), name="static")
 
 @app.middleware("http")
 async def log_requests(request, call_next):
