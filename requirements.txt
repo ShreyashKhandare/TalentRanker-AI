@@ -5,3 +5,5 @@ numpy
 pandas
 pydantic
 python-multipart
+python-jose[cryptography]  # For JWT tokens
+aiofiles  # For async file operations
