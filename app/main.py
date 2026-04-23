@@ -291,6 +291,7 @@ def root():
         # Fallback to JSON response
         return JSONResponse(
             status_code=200,
+            content={
                 "message": "Perfect Job Ranking API is running",
                 "engine": "sklearn-tfidf-perfect",
                 "version": "2.0.0",
