@@ -4,6 +4,7 @@ import traceback
 from fastapi import FastAPI, HTTPException
 from fastapi.responses import JSONResponse, FileResponse, HTMLResponse
 from fastapi.staticfiles import StaticFiles
+from fastapi import UploadFile
 import os
 import numpy as np
 from typing import List, Dict, Any
@@ -202,8 +203,59 @@ def health():
             content={"status": "error", "message": "Service unavailable"}
         )
 
+def extract_text_from_pdf(pdf_file: UploadFile) -> str:
+    """Extract text from uploaded PDF file using multiple methods for better accuracy."""
+    try:
+        # Read PDF content
+        pdf_content = pdf_file.file.read()
+        
+        # Try pdfplumber first (better for modern PDFs)
+        try:
+            import pdfplumber
+            with pdfplumber.open(pdf_file.file) as pdf:
+                text = ""
+                for page in pdf.pages:
+                    page_text = page.extract_text()
+                    if page_text:
+                        text += page_text + "\n"
+                if text.strip():
+                    return text.strip()
+        except Exception as e:
+            print(f"pdfplumber failed: {e}")
+        
+        # Fallback to PyPDF2
+        try:
+            import PyPDF2
+            pdf_file.file.seek(0)  # Reset file pointer
+            pdf_reader = PyPDF2.PdfReader(pdf_file.file)
+            text = ""
+            for page in pdf_reader.pages:
+                page_text = page.extract_text()
+                if page_text:
+                    text += page_text + "\n"
+            return text.strip()
+        except Exception as e:
+            print(f"PyPDF2 failed: {e}")
+        
+        return ""
+        
+    except Exception as e:
+        print(f"PDF extraction error: {e}")
+        return ""
+
 @app.post("/rank")
-async def rank_jobs(resume: str, jobs: List[str]):
+async def rank_jobs(resume: str = None, jobs: List[str] = None, file: UploadFile = None):
+    """Perfect job ranking with comprehensive optimizations"""
+    try:
+        # Handle PDF file upload
+        if file and file.filename.lower().endswith('.pdf'):
+            resume = extract_text_from_pdf(file)
+        elif not resume:
+            raise HTTPException(status_code=400, detail="Resume text cannot be empty")
+        
+        # Input validation
+        if not jobs or len(jobs) == 0:
+            raise HTTPException(status_code=400, detail="Jobs list cannot be empty")
     """Perfect job ranking with comprehensive optimizations"""
     try:
         # Input validation
