@@ -279,67 +279,109 @@
                 <div class="relative">
                     <div class="animate-spin rounded-full h-16 w-16 border-4 border-slate-200 border-t-indigo-600">
                     </div>
+
+                    <div>
+                        <div class="flex justify-between items-center mb-3">
+                            <label class="block text-xs font-bold text-slate-400 uppercase tracking-widest">Job
+                                Description</label>
+                            <button onclick="clearJobDescription()"
+                                class="text-[10px] px-3 py-1 bg-slate-100 dark:bg-slate-800 text-slate-500 rounded-lg hover:bg-red-50 hover:text-red-600 transition-colors font-bold uppercase">Clear
+                                All</button>
+                        </div>
+                        <textarea id="job" class="w-full h-44 rounded-2xl p-5 text-sm leading-relaxed"
+                            placeholder="Paste the target job description here..."></textarea>
+                    </div>
+
+                    <button onclick="analyzeMatch()" id="btn"
+                        class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-extrabold py-5 rounded-2xl transition-all transform active:scale-95 shadow-xl shadow-indigo-500/20 flex items-center justify-center space-x-2">
+                        <span>Analyze Career Fit</span>
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M13 10V3L4 14h7v7l9-11h-7z" />
+                        </svg>
+                    </button>
                 </div>
-                <p class="mt-6 font-bold text-slate-500 animate-pulse uppercase text-xs tracking-widest">Neural Ranking
-                    in progress...</p>
-            </div>
-        </div >
-        </div >
+                </section>
+
+                <section id="results-container" class="glass p-8 rounded-3xl hidden animate__animated animate__fadeIn">
+                    <div class="flex justify-between items-start mb-8">
+                        <h2 class="text-2xl font-bold">Match Intelligence</h2>
+                        <div id="verdict-badge"
+                            class="px-5 py-1.5 rounded-full text-[10px] font-black uppercase tracking-tighter"></div>
+                    </div>
+
+                    <div
+                        class="flex flex-col items-center justify-center py-10 bg-slate-500/5 rounded-3xl mb-8 border border-slate-200/50">
+                        <span id="score-val" class="text-7xl font-black gradient-text">0%</span>
+                        <span class="text-slate-500 text-xs mt-3 font-bold uppercase tracking-[0.2em]">Compatibility
+                            Score</span>
+                    </div>
+
+                    <div class="space-y-6 mb-8">
+                        <h3
+                            class="text-[10px] font-black text-slate-400 uppercase tracking-widest border-b border-slate-100 pb-2">
+                            Skill Weights</h3>
+                        <div id="contributions" class="space-y-5"></div>
+                    </div>
+
+                    <div class="p-5 bg-indigo-600/5 border border-indigo-600/10 rounded-2xl">
+                        <p id="explanation" class="text-sm font-medium leading-relaxed opacity-90"></p>
+                    </div>
+                </section>
+
+                <div id="loader" class="hidden flex flex-col items-center justify-center p-20 glass rounded-3xl">
+                    <div class="relative">
+                        <div class="animate-spin rounded-full h-16 w-16 border-4 border-slate-200 border-t-indigo-600">
+                        </div>
+                    </div>
+                    <p class="mt-6 font-bold text-slate-500 animate-pulse uppercase text-xs tracking-widest">Neural Ranking
+                        in progress...</p>
+                </div>
+            </div >
+            </div >
 
                     <script>
-            // Use your existing JavaScript logic here, it remains fully compatible.
-                        // Ensure you keep your toggleTheme and analyzeMatch functions!
+                // Initialize theme
+                        const savedTheme = localStorage.getItem('theme') || 'dark';
+                        document.documentElement.setAttribute('data-theme', savedTheme);
+                document.addEventListener('DOMContentLoaded', () => updateIcons(savedTheme));
 
-                        const response = await fetch('/rank', {
-                            method: 'POST',
-                        body: formData
+                        const input = document.getElementById("pdfInput");
+
+                        input.addEventListener("change", function () {
+                    const file = input.files[0];
+
+                        if (file) {
+                            console.log("Selected file:", file.name);
+                        document.getElementById("fileName").innerText = file.name;
+                    } else {
+                            console.log("No file selected");
+                        document.getElementById("fileName").innerText = "No file selected";
+                    }
                 });
 
-                        // Show success feedback
-                        uploadArea.classList.add('border-green-500');
-                setTimeout(() => {
-                            uploadArea.classList.remove('border-green-500');
-                }, 2000);
-            } else {
-                            alert('Error extracting text from PDF');
-            }
-        } catch (error) {
-                            alert('Error uploading PDF: ' + error.message);
-        } finally {
-                            // Reset loading state
-                            uploadArea.classList.remove('opacity-50');
-                        uploadArea.disabled = false;
-        }
-        }
+                        function toggleTheme() {
+                    const currentTheme = document.documentElement.getAttribute('data-theme');
+                        const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+                        document.documentElement.setAttribute('data-theme', newTheme);
+                        localStorage.setItem('theme', newTheme);
+                        updateIcons(newTheme);
+                }
 
-                        function clearPDF() {
-                            // Reset file input
-                            document.getElementById('pdf-upload').value = '';
-
-                        // Hide PDF info
-                        document.getElementById('pdf-info').classList.add('hidden');
-
-                        // Clear resume textarea
-                        document.getElementById('resume').value = '';
-
-                        // Reset upload area state
-                        const uploadArea = document.getElementById('pdf-upload');
-                        uploadArea.classList.remove('opacity-50');
-                        uploadArea.disabled = false;
-                        uploadArea.classList.remove('border-green-500');
-
-                        // Reset global variable
-                        uploadedPDF = null;
-        }
-
-                        function clearJobDescription() {
-                            document.getElementById('job').value = '';
-                        // Focus on the cleared textarea for better UX
-                        document.getElementById('job').focus();
-        }
+                        function updateIcons(theme) {
+                    const darkIcon = document.getElementById('theme-icon-dark');
+                        const lightIcon = document.getElementById('theme-icon-light');
+                        if (theme === 'light') {
+                            darkIcon.classList.add('hidden');
+                        lightIcon.classList.remove('hidden');
+                    } else {
+                            darkIcon.classList.remove('hidden');
+                        lightIcon.classList.add('hidden');
+                    }
+                }
 
                         async function analyzeMatch() {
-            const btn = document.getElementById('btn');
+                    const btn = document.getElementById('btn');
                         const loader = document.getElementById('loader');
                         const results = document.getElementById('results-container');
 
@@ -351,71 +393,130 @@
                         const payload = {
                             resume: document.getElementById('resume').value,
                         jobs: [document.getElementById('job').value]
-            };
+                    };
 
                         try {
-                const response = await fetch('/rank', {
+                        const response = await fetch('/rank', {
                             method: 'POST',
                         headers: {'Content-Type': 'application/json' },
                         body: JSON.stringify(payload)
-                });
+                        });
                         const data = await response.json();
-
                         displayResults(data);
-            } catch (err) {
+                    } catch (err) {
                             alert("Server connection failed. Check if API is running!");
-            } finally {
+                    } finally {
                             btn.disabled = false;
                         loader.classList.add('hidden');
-            }
-        }
+                    }
+                }
 
                         function displayResults(data) {
-            const results = document.getElementById('results-container');
-                        const badge = document.getElementById('verdict-badge');
+                    const resultsContainer = document.getElementById('results-container');
+                        const scoreVal = document.getElementById('score-val');
+                        const verdictBadge = document.getElementById('verdict-badge');
+                        const contributions = document.getElementById('contributions');
+                        const explanation = document.getElementById('explanation');
 
-                        results.classList.remove('hidden');
+                        if (data.status === 'success') {
+                        // Update score
+                        const topMatch = data.ranked_jobs[0];
+                        if (topMatch) {
+                            scoreVal.textContent = Math.round(topMatch.similarity_score * 100) + '%';
+                        scoreVal.textContent = Math.round(topMatch.similarity_score * 100) + '%';
 
-                        // Use the match_score from API response
-                        const score = data.match_score || 0;
-                        document.getElementById('score-val').innerText = (score * 100).toFixed(1) + "%";
-                        document.getElementById('explanation').innerText = data.explanation || "Analysis completed successfully.";
+                        // Update verdict
+                        const score = topMatch.similarity_score;
+                        let verdict = 'Poor Match';
+                        let badgeClass = 'bg-red-500 text-white';
+                            
+                            if (score > 0.8) {
+                            verdict = 'Excellent Match';
+                        badgeClass = 'bg-green-500 text-white';
+                            } else if (score > 0.6) {
+                            verdict = 'Good Match';
+                        badgeClass = 'bg-yellow-500 text-white';
+                            } else if (score > 0.4) {
+                            verdict = 'Fair Match';
+                        badgeClass = 'bg-orange-500 text-white';
+                            }
 
-            // Badge Color
-            if (score > 0.8) {
-                            badge.className = "px-5 py-1.5 rounded-full text-[10px] font-black uppercase tracking-tighter bg-emerald-500/20 text-emerald-600 border border-emerald-500/30";
-                        badge.innerText = "STRONG MATCH";
-            } else if (score > 0.6) {
-                            badge.className = "px-5 py-1.5 rounded-full text-[10px] font-black uppercase tracking-tighter bg-amber-500/20 text-amber-600 border border-amber-500/30";
-                        badge.innerText = "GOOD MATCH";
-            } else {
-                            badge.className = "px-5 py-1.5 rounded-full text-[10px] font-black uppercase tracking-tighter bg-red-500/20 text-red-600 border border-red-500/30";
-                        badge.innerText = "WEAK MATCH";
-            }
+                        verdictBadge.textContent = verdict;
+                        verdictBadge.className = `px-5 py-1.5 rounded-full text-[10px] font-black uppercase tracking-tighter ${badgeClass}`;
 
-                        // Render Progress Bars with real API data
-                        const contribContainer = document.getElementById('contributions');
-                        contribContainer.innerHTML = '';
-
-                        // Use real feature contributions from API response
-                        const features = data.feature_contributions || { };
-
-                        for (const [key, value] of Object.entries(features)) {
-                const label = key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
-                        contribContainer.innerHTML += `
-                        <div>
-                            <div class="flex justify-between text-[10px] uppercase font-bold text-slate-400 mb-1">
-                                <span>${label}</span>
-                                <span>${(value * 100).toFixed(1)}%</span>
-                            </div>
-                            <div class="w-full bg-slate-200 rounded-full h-2">
-                                <div class="bg-indigo-500 h-2 rounded-full transition-all duration-1000" style="width: ${value * 100}%"></div>
-                            </div>
+                        // Display contributions
+                        contributions.innerHTML = '';
+                            data.ranked_jobs.slice(0, 5).forEach((job, index) => {
+                                const contribution = document.createElement('div');
+                        contribution.className = 'flex items-center justify-between p-3 bg-slate-500/5 rounded-lg';
+                        contribution.innerHTML = `
+                        <div class="flex items-center space-x-3">
+                            <span class="text-sm font-medium">${job.job}</span>
+                            <span class="text-xs text-slate-500">${Math.round(job.similarity_score * 100)}%</span>
                         </div>
-                `;
-            }
-        }
+                        <div class="w-16 bg-slate-200 rounded-full h-2">
+                            <div class="bg-indigo-600 h-2 rounded-full" style="width: ${job.similarity_score * 100}%"></div>
+                        </div>
+                        `;
+                        contributions.appendChild(contribution);
+                            });
+
+                        // Show explanation
+                        explanation.textContent = `Your resume shows ${Math.round(topMatch.similarity_score * 100)}% compatibility with this position. ${verdict}.`;
+                        }
+
+                        // Show results
+                        resultsContainer.classList.remove('hidden');
+                    } else {
+                            alert('Error processing request: ' + (data.message || 'Unknown error'));
+                    }
+                }
     </script>
+</body>
+
+// Use the match_score from API response
+const score = data.match_score || 0;
+document.getElementById('score-val').innerText = (score * 100).toFixed(1) + "%";
+document.getElementById('explanation').innerText = data.explanation || "Analysis completed successfully.";
+
+// Badge Color
+if (score > 0.8) {
+badge.className = "px-5 py-1.5 rounded-full text-[10px] font-black uppercase tracking-tighter bg-emerald-500/20
+text-emerald-600 border border-emerald-500/30";
+badge.innerText = "STRONG MATCH";
+} else if (score > 0.6) {
+badge.className = "px-5 py-1.5 rounded-full text-[10px] font-black uppercase tracking-tighter bg-amber-500/20
+text-amber-600 border border-amber-500/30";
+badge.innerText = "GOOD MATCH";
+} else {
+badge.className = "px-5 py-1.5 rounded-full text-[10px] font-black uppercase tracking-tighter bg-red-500/20 text-red-600
+border border-red-500/30";
+badge.innerText = "WEAK MATCH";
+}
+
+// Render Progress Bars with real API data
+const contribContainer = document.getElementById('contributions');
+contribContainer.innerHTML = '';
+
+// Use real feature contributions from API response
+const features = data.feature_contributions || { };
+
+for (const [key, value] of Object.entries(features)) {
+const label = key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+contribContainer.innerHTML += `
+<div>
+    <div class="flex justify-between text-[10px] uppercase font-bold text-slate-400 mb-1">
+        <span>${label}</span>
+        <span>${(value * 100).toFixed(1)}%</span>
+    </div>
+    <div class="w-full bg-slate-200 rounded-full h-2">
+        <div class="bg-indigo-500 h-2 rounded-full transition-all duration-1000" style="width: ${value * 100}%"></div>
+    </div>
+</div>
+`;
+}
+}
+</script>
 </body>
 
 </html>
