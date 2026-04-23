@@ -7,3 +7,5 @@ pydantic
 python-multipart
 python-jose[cryptography]
 aiofiles
+PyPDF2
+pdfplumber
