@@ -2,7 +2,8 @@ import logging
 import sys
 import traceback
 from fastapi import FastAPI, HTTPException
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, FileResponse
+from fastapi.staticfiles import StaticFiles
 import numpy as np
 from typing import List, Dict, Any
 import time
@@ -137,6 +138,9 @@ try:
 except Exception as e:
     logger.critical(f"Failed to initialize model: {e}")
     sys.exit(1)
+
+# Mount static files
+app.mount("/static", StaticFiles(directory="static", html=True), name="static")
 
 app = FastAPI(
     title="Perfect Job Ranking Engine",
@@ -281,39 +285,44 @@ async def rank_jobs(resume: str, jobs: List[str]):
 
 @app.get("/")
 def root():
-    """Perfect root endpoint with comprehensive information"""
-    return JSONResponse(
-        status_code=200,
-        content={
-            "message": "Perfect Job Ranking API is running",
-            "engine": "sklearn-tfidf-perfect",
-            "version": "2.0.0",
-            "status": "production-ready",
-            "features": [
-                "Enhanced TF-IDF text similarity",
-                "Intelligent caching system",
-                "Comprehensive error handling",
-                "Request logging and monitoring",
-                "Input validation and sanitization",
-                "Performance metrics",
-                "Production-ready health checks",
-                "Optimized for Render deployment"
-            ],
-            "endpoints": {
-                "health": "/health",
-                "rank": "/rank (POST)",
-                "docs": "/docs",
-                "redoc": "/redoc",
-                "metrics": "/metrics"
-            },
-            "performance": {
-                "max_jobs_per_request": 100,
-                "cache_enabled": True,
-                "logging_enabled": True,
-                "monitoring_enabled": True
+    """Serve HTML frontend or return API info"""
+    try:
+        # Try to serve the HTML frontend
+        return FileResponse("static/index.html")
+    except Exception:
+        # Fallback to JSON response
+        return JSONResponse(
+            status_code=200,
+            content={
+                "message": "Perfect Job Ranking API is running",
+                "engine": "sklearn-tfidf-perfect",
+                "version": "2.0.0",
+                "status": "production-ready",
+                "features": [
+                    "Enhanced TF-IDF text similarity",
+                    "Intelligent caching system",
+                    "Comprehensive error handling",
+                    "Request logging and monitoring",
+                    "Input validation and sanitization",
+                    "Performance metrics",
+                    "Production-ready health checks",
+                    "Optimized for Render deployment"
+                ],
+                "endpoints": {
+                    "health": "/health",
+                    "rank": "/rank (POST)",
+                    "docs": "/docs",
+                    "redoc": "/redoc",
+                    "metrics": "/metrics"
+                },
+                "performance": {
+                    "max_jobs_per_request": 100,
+                    "cache_enabled": True,
+                    "logging_enabled": True,
+                    "monitoring_enabled": True
+                }
             }
-        }
-    )
+        )
 
 @app.get("/metrics")
 def metrics():
