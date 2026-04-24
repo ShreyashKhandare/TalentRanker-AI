@@ -263,31 +263,34 @@
             document.getElementById('resume').value = '';
         }
 
-        // Initialize drag-drop when DOM is ready
-        document.addEventListener('DOMContentLoaded', function () {
-            console.log("DOM loaded - setting up drag-drop");
+        // Simple drag-drop setup - run immediately
+        const dropZone = document.getElementById('drop-zone');
+        const fileInput = document.getElementById('pdf-upload');
 
-            const dropZone = document.getElementById('drop-zone');
-            const fileInput = document.getElementById('pdf-upload');
+        if (dropZone && fileInput) {
+            console.log("Setting up drag-drop");
 
-            if (!dropZone || !fileInput) {
-                console.error("Drop zone or file input not found!");
-                return;
-            }
+            // Click to browse
+            dropZone.addEventListener('click', function () {
+                console.log("Drop zone clicked");
+                fileInput.click();
+            });
 
-            // Simple drag-drop setup
+            // Drag over
             dropZone.addEventListener('dragover', function (e) {
                 e.preventDefault();
                 dropZone.style.borderColor = '#38bdf8';
                 dropZone.style.backgroundColor = 'rgba(56, 189, 248, 0.1)';
             });
 
+            // Drag leave
             dropZone.addEventListener('dragleave', function (e) {
                 e.preventDefault();
                 dropZone.style.borderColor = '';
                 dropZone.style.backgroundColor = '';
             });
 
+            // Drop file
             dropZone.addEventListener('drop', function (e) {
                 e.preventDefault();
                 dropZone.style.borderColor = '';
@@ -297,6 +300,7 @@
                 if (files.length > 0) {
                     const file = files[0];
                     if (file.name.toLowerCase().endsWith('.pdf')) {
+                        console.log("PDF dropped:", file.name);
                         fileInput.files = files;
                         handlePDFUpload({ target: fileInput });
                     } else {
@@ -306,14 +310,9 @@
             });
 
             console.log("Drag-drop setup complete");
-
-            // Simple test - add click handler to verify JS is working
-            dropZone.addEventListener('click', function () {
-                console.log("Drop zone clicked - opening file picker");
-                fileInput.click();
-            });
-
-        });
+        } else {
+            console.error("Drop zone or file input not found!");
+        }
     </script>
 </body>
 
