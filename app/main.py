@@ -9,9 +9,9 @@ import os
 import numpy as np
 from typing import List, Dict, Any
 import time
-import os
 import hashlib
 import json
+import io
 
 # Configure production logging
 logging.basicConfig(
@@ -382,6 +382,7 @@ async def rank_jobs(resume: str = None, jobs: List[str] = None, file: UploadFile
                 "engine": "sklearn-tfidf-perfect"
             }
         )
+
 @app.get("/", response_class=HTMLResponse)
 async def serve_ui():
     """Serve HTML frontend definitively"""
