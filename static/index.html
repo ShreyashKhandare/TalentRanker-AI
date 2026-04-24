@@ -252,14 +252,15 @@
                 uploadStatus.classList.remove('text-slate-500');
                 uploadStatus.classList.add('text-sky-400', 'animate-pulse');
 
-                const formData = new FormData();
-                formData.append('file', file);
 
                 try {
-                    console.log('Sending file to ${API_BASE}/rank');
+                    const controller = new AbortController();
+                    const timeoutId = setTimeout(() => controller.abort(), 10000);
+
                     const response = await fetch(`${API_BASE}/rank`, {
                         method: 'POST',
-                        body: formData
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ resume, jobs: [job] }),
                     });
 
                     console.log('Response status:', response.status, response.ok);
@@ -288,77 +289,78 @@
                     uploadStatus.textContent = "Server connection failed: " + error.message;
                     uploadStatus.classList.remove('animate-pulse', 'text-sky-400');
                     uploadStatus.classList.add('text-red-400');
+                } finally {
+                    clearTimeout(timeoutId);
+                }
+            };
+
+            // These need to be global for the onclick attributes
+            function clearPDF() {
+                document.getElementById('pdf-upload').value = '';
+                document.getElementById('pdf-info').classList.add('hidden');
+                document.getElementById('resume').value = '';
+                document.getElementById('upload-status').textContent = "Supported: PDF (Max 5MB)";
+                document.getElementById('upload-status').className = "text-xs text-slate-500";
+            }
+
+            async function analyzeMatch() {
+                const resume = document.getElementById('resume').value;
+                const job = document.getElementById('job').value;
+                const results = document.getElementById('results-container');
+                const loader = document.getElementById('loader');
+
+                console.log('DEBUG analyzeMatch - resume length:', resume.length, 'job length:', job.length);
+                console.log('DEBUG analyzeMatch - resume:', resume.substring(0, 100) + '...');
+                console.log('DEBUG analyzeMatch - job:', job.substring(0, 100) + '...');
+
+                if (!resume || !job) {
+                    alert("Please provide both resume and job description.");
+                    return;
+                }
+
+                results.classList.add('hidden');
+                loader.classList.remove('hidden');
+
+                try {
+                    const controller = new AbortController();
+                    const timeoutId = setTimeout(() => controller.abort(), 10000);
+
+                    const response = await fetch(`${API_BASE}/rank`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ resume, jobs: [job] }),
+                        signal: controller.signal
+                    });
+
+                    clearTimeout(timeoutId);
+                    const data = await response.json();
+                    loader.classList.add('hidden');
+                    results.classList.remove('hidden');
+
+                    if (data.match_score !== undefined) {
+                        const score = (data.match_score * 100).toFixed(1);
+                        document.getElementById('score-val').innerText = score + "%";
+                        document.getElementById('explanation').innerText = data.explanation || "Analysis complete.";
+
+                        const badge = document.getElementById('verdict-badge');
+                        badge.className = score > 75
+                            ? "px-4 py-1 rounded-full text-[10px] font-black uppercase bg-emerald-500/20 text-emerald-500"
+                            : "px-4 py-1 rounded-full text-[10px] font-black uppercase bg-amber-500/20 text-amber-500";
+                        badge.innerText = score > 75 ? "Strong Match" : "Potential Gap";
+                    }
+                } catch (err) {
+                    clearTimeout(timeoutId);
+                    loader.classList.add('hidden');
+                    console.error('Analysis error:', err);
+                    alert(`Analysis failed: ${err.message}`);
                 }
             }
-        });
 
-        // These need to be global for the onclick attributes
-        function clearPDF() {
-            document.getElementById('pdf-upload').value = '';
-            document.getElementById('pdf-info').classList.add('hidden');
-            document.getElementById('resume').value = '';
-            document.getElementById('upload-status').textContent = "Supported: PDF (Max 5MB)";
-            document.getElementById('upload-status').className = "text-xs text-slate-500";
-        }
-
-        async function analyzeMatch() {
-            const resume = document.getElementById('resume').value;
-            const job = document.getElementById('job').value;
-            const results = document.getElementById('results-container');
-            const loader = document.getElementById('loader');
-
-            console.log('DEBUG analyzeMatch - resume length:', resume.length, 'job length:', job.length);
-            console.log('DEBUG analyzeMatch - resume:', resume.substring(0, 100) + '...');
-            console.log('DEBUG analyzeMatch - job:', job.substring(0, 100) + '...');
-
-            if (!resume || !job) {
-                alert("Please provide both resume and job description.");
-                return;
+            function toggleTheme() {
+                const body = document.documentElement;
+                const current = body.getAttribute('data-theme');
+                body.setAttribute('data-theme', current === 'light' ? 'dark' : 'light');
             }
-
-            results.classList.add('hidden');
-            loader.classList.remove('hidden');
-
-            try {
-                const controller = new AbortController();
-                const timeoutId = setTimeout(() => controller.abort(), 10000);
-
-                const response = await fetch(`${API_BASE}/rank`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ resume, jobs: [job] }),
-                    signal: controller.signal
-                });
-
-                clearTimeout(timeoutId);
-                const data = await response.json();
-                loader.classList.add('hidden');
-                results.classList.remove('hidden');
-
-                if (data.match_score !== undefined) {
-                    const score = (data.match_score * 100).toFixed(1);
-                    document.getElementById('score-val').innerText = score + "%";
-                    document.getElementById('explanation').innerText = data.explanation || "Analysis complete.";
-
-                    const badge = document.getElementById('verdict-badge');
-                    badge.className = score > 75
-                        ? "px-4 py-1 rounded-full text-[10px] font-black uppercase bg-emerald-500/20 text-emerald-500"
-                        : "px-4 py-1 rounded-full text-[10px] font-black uppercase bg-amber-500/20 text-amber-500";
-                    badge.innerText = score > 75 ? "Strong Match" : "Potential Gap";
-                }
-            } catch (err) {
-                clearTimeout(timeoutId);
-                loader.classList.add('hidden');
-                console.error('Analysis error:', err);
-                alert(`Analysis failed: ${err.message}`);
-            }
-        }
-
-        function toggleTheme() {
-            const body = document.documentElement;
-            const current = body.getAttribute('data-theme');
-            body.setAttribute('data-theme', current === 'light' ? 'dark' : 'light');
-        }
     </script>
 </body>
 
