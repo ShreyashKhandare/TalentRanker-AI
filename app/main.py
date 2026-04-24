@@ -269,19 +269,20 @@ async def extract_pdf(file: UploadFile = File(...)):
         )
 
 @app.post("/rank")
-async def rank_jobs(resume: str = Form(None), jobs: List[str] = Form(None), file: UploadFile = File(None)):
-    """Perfect job ranking with comprehensive optimizations - handles both file upload and text input"""
+async def rank_jobs(resume: str = None, jobs: List[str] = None, file: UploadFile = None):
+    """Perfect job ranking with comprehensive optimizations"""
     try:
         # Handle PDF file upload
         extracted_text = None
         if file and file.filename.lower().endswith('.pdf'):
             extracted_text = extract_text_from_pdf(file)
-
+            
             if not extracted_text:
-                return {
-                    "error": "Could not extract text. PDF may be scanned or unsupported."
-                }
-
+                return JSONResponse(
+                    status_code=400,
+                    content={"error": "Could not extract text. PDF may be scanned or unsupported."}
+                )
+            
             # If only PDF is uploaded, return extracted text
             if not jobs or len(jobs) == 0:
                 return {
