@@ -112,8 +112,8 @@
                                         browse</p>
                                     <p id="upload-status" class="text-xs text-slate-500">Supported: PDF (Max 5MB)</p>
                                 </div>
-                                <input id="pdf-upload" type="file" class="hidden" accept=".pdf" />
                             </div>
+                            <input id="pdf-upload" type="file" class="hidden" accept=".pdf" />
 
                             <div id="pdf-info"
                                 class="hidden p-4 bg-emerald-500/10 rounded-xl border border-emerald-500/30 flex items-center justify-between animate__animated animate__fadeIn">
@@ -189,11 +189,18 @@
             const resumeArea = document.getElementById('resume');
             const uploadStatus = document.getElementById('upload-status');
 
+            console.log('PDF Upload Handler Initialized', { dropZone, fileInput, pdfInfo });
+
             // Trigger file browser on click
-            dropZone.addEventListener('click', () => fileInput.click());
+            dropZone.addEventListener('click', (e) => {
+                e.stopPropagation();
+                console.log('Drop zone clicked');
+                fileInput.click();
+            });
 
             // Handle File Selection
-            fileInput.addEventListener('change', function () {
+            fileInput.addEventListener('change', function (e) {
+                console.log('File input changed', this.files);
                 if (this.files && this.files[0]) {
                     handleFile(this.files[0]);
                 }
@@ -202,15 +209,20 @@
             // Handle Drag & Drop
             dropZone.addEventListener('dragover', (e) => {
                 e.preventDefault();
+                e.stopPropagation();
+                console.log('File dragged over');
                 dropZone.classList.add('border-sky-400', 'bg-sky-400/10');
             });
 
-            dropZone.addEventListener('dragleave', () => {
+            dropZone.addEventListener('dragleave', (e) => {
+                e.stopPropagation();
                 dropZone.classList.remove('border-sky-400', 'bg-sky-400/10');
             });
 
             dropZone.addEventListener('drop', (e) => {
                 e.preventDefault();
+                e.stopPropagation();
+                console.log('File dropped', e.dataTransfer.files);
                 dropZone.classList.remove('border-sky-400', 'bg-sky-400/10');
                 if (e.dataTransfer.files.length > 0) {
                     handleFile(e.dataTransfer.files[0]);
@@ -218,15 +230,19 @@
             });
 
             async function handleFile(file) {
+                console.log('Handling file:', file.name, file.type, file.size);
+
                 if (file.type !== "application/pdf") {
                     alert("Please upload a PDF file.");
                     return;
                 }
 
                 // 1. Update UI Immediately
+                console.log('Updating UI for file:', file.name);
                 pdfFileName.textContent = file.name;
-                pdfInfo.classList.remove('hidden'); // Force show the info bar
+                pdfInfo.classList.remove('hidden');
                 uploadStatus.textContent = "Extracting intelligence...";
+                uploadStatus.classList.remove('text-slate-500');
                 uploadStatus.classList.add('text-sky-400', 'animate-pulse');
 
                 // 2. Prepare Data
@@ -234,24 +250,38 @@
                 formData.append('file', file);
 
                 try {
-                    const response = await fetch('/rank', {
+                    console.log('Sending file to /extract-pdf');
+                    const response = await fetch('/extract-pdf', {
                         method: 'POST',
                         body: formData
                     });
 
+                    console.log('Response status:', response.status, response.ok);
                     const data = await response.json();
+                    console.log('Response data:', data);
 
-                    if (data.extracted_text) {
+                    if (response.ok && data.extracted_text) {
+                        console.log('Extraction successful, text length:', data.extracted_text.length);
                         resumeArea.value = data.extracted_text;
-                        uploadStatus.textContent = "Extraction complete!";
-                        uploadStatus.classList.remove('animate-pulse');
-                        uploadStatus.classList.replace('text-sky-400', 'text-emerald-400');
+                        uploadStatus.textContent = "Extraction complete! ✓";
+                        uploadStatus.classList.remove('animate-pulse', 'text-sky-400');
+                        uploadStatus.classList.add('text-emerald-400');
+                    } else if (data.error) {
+                        console.error('Extraction error:', data.error);
+                        uploadStatus.textContent = "Extraction failed: " + data.error;
+                        uploadStatus.classList.remove('animate-pulse', 'text-sky-400');
+                        uploadStatus.classList.add('text-red-400');
                     } else {
-                        alert("Extraction failed: " + (data.error || "No text found"));
+                        console.error('Invalid response:', data);
+                        uploadStatus.textContent = "Extraction failed: Invalid response";
+                        uploadStatus.classList.remove('animate-pulse', 'text-sky-400');
+                        uploadStatus.classList.add('text-red-400');
                     }
                 } catch (error) {
                     console.error("Upload error:", error);
-                    alert("Server connection failed.");
+                    uploadStatus.textContent = "Server connection failed: " + error.message;
+                    uploadStatus.classList.remove('animate-pulse', 'text-sky-400');
+                    uploadStatus.classList.add('text-red-400');
                 }
             }
         });

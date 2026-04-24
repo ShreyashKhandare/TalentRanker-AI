@@ -1,10 +1,9 @@
 import logging
 import sys
 import traceback
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, UploadFile, File, Form
 from fastapi.responses import JSONResponse, FileResponse, HTMLResponse
 from fastapi.staticfiles import StaticFiles
-from fastapi import UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 import os
 import numpy as np
@@ -237,9 +236,41 @@ def extract_text_from_pdf(upload_file: UploadFile) -> str:
         print("PDF extraction error:", str(e))
         return ""
 
+@app.post("/extract-pdf")
+async def extract_pdf(file: UploadFile = File(...)):
+    """Extract text from PDF file"""
+    try:
+        if not file.filename.lower().endswith('.pdf'):
+            return JSONResponse(
+                status_code=400,
+                content={"error": "File must be a PDF"}
+            )
+        
+        extracted_text = extract_text_from_pdf(file)
+        
+        if not extracted_text:
+            return JSONResponse(
+                status_code=400,
+                content={"error": "Could not extract text. PDF may be scanned, empty, or corrupted."}
+            )
+        
+        logger.info(f"Successfully extracted {len(extracted_text)} characters from PDF")
+        return JSONResponse(
+            status_code=200,
+            content={"extracted_text": extracted_text}
+        )
+        
+    except Exception as e:
+        logger.error(f"PDF extraction error: {e}")
+        logger.error(f"Traceback: {traceback.format_exc()}")
+        return JSONResponse(
+            status_code=500,
+            content={"error": f"PDF extraction failed: {str(e)}"}
+        )
+
 @app.post("/rank")
-async def rank_jobs(resume: str = None, jobs: List[str] = None, file: UploadFile = None):
-    """Perfect job ranking with comprehensive optimizations"""
+async def rank_jobs(resume: str = Form(None), jobs: List[str] = Form(None), file: UploadFile = File(None)):
+    """Perfect job ranking with comprehensive optimizations - handles both file upload and text input"""
     try:
         # Handle PDF file upload
         extracted_text = None
@@ -259,7 +290,7 @@ async def rank_jobs(resume: str = None, jobs: List[str] = None, file: UploadFile
             
             resume = extracted_text
         elif not resume:
-            # Input validation
+            # Input validation for text-only requests
             if not resume or not resume.strip():
                 raise HTTPException(status_code=400, detail="Resume text cannot be empty")
             
@@ -296,11 +327,18 @@ async def rank_jobs(resume: str = None, jobs: List[str] = None, file: UploadFile
         avg_score = sum(scores) / len(scores) if scores else 0
         max_score = max(scores) if scores else 0
         
+        # For single job analysis (match score)
+        match_score = scores[0] if scores else 0
+        explanation = f"Resume matches this job description with a score of {match_score:.1%}. " \
+                     f"This indicates a {'strong' if match_score > 0.75 else 'moderate' if match_score > 0.5 else 'weak'} match."
+        
         result = {
             "status": "success",
             "resume": resume[:200] + "..." if len(resume) > 200 else resume,
             "processed_jobs": len(jobs),
             "processing_time_seconds": round(processing_time, 4),
+            "match_score": float(match_score),
+            "explanation": explanation,
             "ranked_jobs": [
                 {
                     "rank": idx + 1,
@@ -401,9 +439,8 @@ async def global_exception_handler(request, exc):
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(
-        "app.engine:app",
+        app,
         host="0.0.0.0",
         port=int(os.getenv("PORT", 10000)),
-        log_level="info",
-        access_log=True
+        log_level="info"
     )
