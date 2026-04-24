@@ -171,6 +171,14 @@
                 </div>
             </section>
 
+            <div id="status" class="hidden p-4 bg-slate-500/10 rounded-xl border border-slate-200/10">
+                <p class="text-sm font-medium text-slate-300">Status: Ready</p>
+            </div>
+
+            <div id="full" class="hidden p-4 bg-slate-500/10 rounded-xl border border-slate-200/10">
+                <pre class="text-xs text-slate-400 whitespace-pre-wrap">Response will appear here...</pre>
+            </div>
+
             <div id="loader"
                 class="hidden flex flex-col items-center justify-center p-20 glass rounded-3xl lg:col-span-1">
                 <div class="animate-spin rounded-full h-16 w-16 border-4 border-slate-700 border-t-sky-500"></div>
@@ -321,10 +329,10 @@
                 results.classList.add('hidden');
                 loader.classList.remove('hidden');
 
-                try {
-                    const controller = new AbortController();
-                    const timeoutId = setTimeout(() => controller.abort(), 10000);
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 10000);
 
+                try {
                     const response = await fetch(`${API_BASE}/rank`, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
@@ -333,7 +341,14 @@
                     });
 
                     clearTimeout(timeoutId);
+
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! Status: ${response.status}`);
+                    }
+
                     const data = await response.json();
+                    console.log("API Response:", data);
+
                     loader.classList.add('hidden');
                     results.classList.remove('hidden');
 
@@ -352,7 +367,10 @@
                     clearTimeout(timeoutId);
                     loader.classList.add('hidden');
                     console.error('Analysis error:', err);
-                    alert(`Analysis failed: ${err.message}`);
+                    document.getElementById('status').innerText = "Status: ERROR";
+                    document.getElementById('full').innerText = err.message;
+                } finally {
+                    clearTimeout(timeoutId);
                 }
             }
 
