@@ -2,7 +2,7 @@ services:
   - type: web
     name: job-ranking-api
     env: python
-    # Use Python 3.10 for stable deployment
+    # Use Python 3.10.12 for stable deployment
     buildCommand: pip install --upgrade pip && pip install -r requirements.txt
     startCommand: python -m uvicorn app.main:app --host 0.0.0.0 --port $PORT
     envVars:
