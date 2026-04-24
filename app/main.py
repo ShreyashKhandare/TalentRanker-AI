@@ -198,9 +198,12 @@ def test_endpoint():
     """Simple test endpoint to verify API is working"""
     return {"status": "ok", "message": "API is working"}
 
+@app.get("/")
+async def root():
+    return {"message": "TalentRanker AI - Perfect Job Ranking System", "status": "running"}
+
 @app.get("/health")
-def health():
-    """Perfect health check endpoint"""
+async def health_check():
     try:
         health_status = model.health_check()
         return JSONResponse(
