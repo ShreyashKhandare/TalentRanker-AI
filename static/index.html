@@ -101,7 +101,9 @@
                             Content</label>
                         <div class="space-y-4">
                             <label for="pdf-upload" id="drop-zone"
-                                class="upload-area flex flex-col items-center justify-center w-full h-36 rounded-2xl cursor-pointer bg-slate-900/20">
+                                class="upload-area flex flex-col items-center justify-center w-full h-36 rounded-2xl cursor-pointer bg-slate-900/20"
+                                ondragover="event.preventDefault(); event.dataTransfer.dropEffect = 'copy';"
+                                ondrop="event.preventDefault(); handleDrop(event);">
                                 <div class="flex flex-col items-center justify-center pt-5 pb-6">
                                     <svg class="w-10 h-10 mb-3 text-sky-500" fill="none" stroke="currentColor"
                                         viewBox="0 0 24 24">
@@ -261,6 +263,25 @@
             document.getElementById('pdf-upload').value = '';
             document.getElementById('pdf-info').classList.add('hidden');
             document.getElementById('resume').value = '';
+        }
+
+        function handleDrop(event) {
+            console.log("Inline drop handler called");
+            event.preventDefault();
+
+            const files = event.dataTransfer.files;
+            if (files.length > 0) {
+                const file = files[0];
+                console.log("File dropped:", file.name);
+
+                if (file.name.toLowerCase().endsWith('.pdf')) {
+                    const fileInput = document.getElementById('pdf-upload');
+                    fileInput.files = files;
+                    handlePDFUpload({ target: fileInput });
+                } else {
+                    alert('Please select a PDF file only.');
+                }
+            }
         }
 
         // Simple drag-drop setup - run immediately
