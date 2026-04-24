@@ -198,10 +198,6 @@ def test_endpoint():
     """Simple test endpoint to verify API is working"""
     return {"status": "ok", "message": "API is working"}
 
-@app.get("/")
-async def root():
-    return {"message": "TalentRanker AI - Perfect Job Ranking System", "status": "running"}
-
 @app.get("/health")
 async def health_check():
     try:
@@ -387,15 +383,24 @@ async def rank_jobs(resume: str = None, jobs: List[str] = None, file: UploadFile
             }
         )
 @app.get("/", response_class=HTMLResponse)
-def serve_ui():
+async def serve_ui():
     """Serve HTML frontend definitively"""
-    file_path = os.path.join(os.getcwd(), "static", "index.html")
-    
-    if not os.path.exists(file_path):
-        return {"error": f"File not found at {file_path}"}
-    
-    with open(file_path, "r", encoding="utf-8") as f:
-        return f.read()
+    try:
+        file_path = os.path.join(os.getcwd(), "static", "index.html")
+        
+        if not os.path.exists(file_path):
+            logger.error(f"Static file not found: {file_path}")
+            return HTMLResponse(content="<h1>Service unavailable</h1>", status_code=503)
+        
+        with open(file_path, "r", encoding="utf-8") as f:
+            content = f.read()
+        
+        logger.info("Served frontend HTML successfully")
+        return HTMLResponse(content=content)
+        
+    except Exception as e:
+        logger.error(f"Error serving frontend: {e}")
+        return HTMLResponse(content="<h1>Service unavailable</h1>", status_code=503)
 
 @app.get("/metrics")
 def metrics():
