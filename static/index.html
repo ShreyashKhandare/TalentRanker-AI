@@ -262,6 +262,64 @@
             document.getElementById('pdf-info').classList.add('hidden');
             document.getElementById('resume').value = '';
         }
+
+        // Drag and Drop functionality
+        const dropZone = document.getElementById('drop-zone');
+        const fileInput = document.getElementById('pdf-upload');
+
+        // Prevent default drag behaviors
+        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+            dropZone.addEventListener(eventName, preventDefaults, false);
+            document.body.addEventListener(eventName, preventDefaults, false);
+        });
+
+        function preventDefaults(e) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
+
+        // Highlight drop zone when item is dragged over it
+        ['dragenter', 'dragover'].forEach(eventName => {
+            dropZone.addEventListener(eventName, highlight, false);
+        });
+
+        ['dragleave', 'drop'].forEach(eventName => {
+            dropZone.addEventListener(eventName, unhighlight, false);
+        });
+
+        function highlight(e) {
+            dropZone.classList.add('border-sky-500', 'bg-sky-500/10');
+        }
+
+        function unhighlight(e) {
+            dropZone.classList.remove('border-sky-500', 'bg-sky-500/10');
+        }
+
+        // Handle dropped files
+        dropZone.addEventListener('drop', handleDrop, false);
+
+        function handleDrop(e) {
+            const dt = e.dataTransfer;
+            const files = dt.files;
+
+            handleFiles(files);
+        }
+
+        function handleFiles(files) {
+            if (files.length > 0) {
+                const file = files[0];
+                
+                // Check if it's a PDF
+                if (!file.name.toLowerCase().endsWith('.pdf')) {
+                    alert('Please select a PDF file only.');
+                    return;
+                }
+
+                // Update file input and trigger upload
+                fileInput.files = files;
+                handlePDFUpload({ target: fileInput });
+            }
+        }
     </script>
 </body>
 
