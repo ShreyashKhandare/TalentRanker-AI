@@ -142,6 +142,11 @@
                             placeholder="Paste the target job description here..."></textarea>
                     </div>
 
+                    <button onclick="testJS()"
+                        class="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-2 rounded-lg mb-4">
+                        Test JavaScript
+                    </button>
+
                     <button onclick="analyzeMatch()" id="analyze-btn"
                         class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-extrabold py-5 rounded-2xl transition-all shadow-xl flex items-center justify-center space-x-2">
                         <span>Analyze Career Fit</span>
@@ -263,6 +268,11 @@
             document.getElementById('pdf-upload').value = '';
             document.getElementById('pdf-info').classList.add('hidden');
             document.getElementById('resume').value = '';
+        }
+
+        function testJS() {
+            alert("JavaScript is working!");
+            console.log("Test button clicked - JS is executing");
         }
 
         function handleDrop(event) {
