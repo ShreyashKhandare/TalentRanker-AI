@@ -250,8 +250,8 @@
                 formData.append('file', file);
 
                 try {
-                    console.log('Sending file to /extract-pdf');
-                    const response = await fetch('/extract-pdf', {
+                    console.log('Sending file to https://talentranker-ai.onrender.com/rank');
+                    const response = await fetch('https://talentranker-ai.onrender.com/rank', {
                         method: 'POST',
                         body: formData
                     });
@@ -310,7 +310,7 @@
             loader.classList.remove('hidden');
 
             try {
-                const response = await fetch('/rank', {
+                const response = await fetch('https://talentranker-ai.onrender.com/rank', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ resume, jobs: [job] })
