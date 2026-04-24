@@ -306,6 +306,13 @@
             });
 
             console.log("Drag-drop setup complete");
+
+            // Simple test - add click handler to verify JS is working
+            dropZone.addEventListener('click', function () {
+                console.log("Drop zone clicked - opening file picker");
+                fileInput.click();
+            });
+
         });
     </script>
 </body>
