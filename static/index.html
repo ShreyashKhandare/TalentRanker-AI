@@ -101,9 +101,8 @@
                             Content</label>
                         <div class="space-y-4">
                             <div id="drop-zone"
-                                class="upload-area flex flex-col items-center justify-center w-full h-36 rounded-2xl cursor-pointer bg-slate-900/20"
-                                ondragover="event.preventDefault();" ondrop="handleDrop(event);">
-                                <div class="flex flex-col items-center justify-center pt-5 pb-6 pointer-events-none">
+                                class="upload-area flex flex-col items-center justify-center w-full h-36 rounded-2xl cursor-pointer bg-slate-900/20 relative">
+                                <div class="flex flex-col items-center justify-center pointer-events-none">
                                     <svg class="w-10 h-10 mb-3 text-sky-500" fill="none" stroke="currentColor"
                                         viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -117,18 +116,19 @@
                             </div>
 
                             <div id="pdf-info"
-                                class="hidden p-4 bg-emerald-500/5 rounded-xl border border-emerald-500/20 flex items-center justify-between">
+                                class="hidden p-4 bg-emerald-500/10 rounded-xl border border-emerald-500/30 flex items-center justify-between animate__animated animate__fadeIn">
                                 <div class="flex items-center space-x-3">
-                                    <div class="p-2 bg-emerald-500/20 rounded-lg text-emerald-600">📄</div>
-                                    <span id="pdf-filename" class="text-sm font-semibold"></span>
+                                    <span class="text-xl">📄</span>
+                                    <span id="pdf-filename"
+                                        class="text-sm font-bold text-emerald-500 truncate max-w-[200px]">filename.pdf</span>
                                 </div>
-                                <button onclick="clearPDF()"
-                                    class="text-xs font-bold text-red-500 hover:underline">Remove</button>
+                                <button type="button" onclick="clearPDF()"
+                                    class="text-xs font-black text-red-500 uppercase tracking-tighter hover:text-red-400">Remove</button>
                             </div>
 
                             <textarea id="resume"
                                 class="w-full h-44 rounded-2xl p-5 text-sm glass text-white placeholder-slate-500 focus:ring-2 focus:ring-sky-500 outline-none"
-                                placeholder="Extracted text will appear here or paste manually..."></textarea>
+                                placeholder="Extracted text will appear here..."></textarea>
                         </div>
                     </div>
 
@@ -181,81 +181,92 @@
     </div>
 
     <script>
-        // Constants
-        const dropZone = document.getElementById('drop-zone');
-        const fileInput = document.getElementById('pdf-upload');
-        const resumeArea = document.getElementById('resume');
-        const pdfInfo = document.getElementById('pdf-info');
-        const pdfFileName = document.getElementById('pdf-filename');
+        document.addEventListener('DOMContentLoaded', () => {
+            const dropZone = document.getElementById('drop-zone');
+            const fileInput = document.getElementById('pdf-upload');
+            const pdfInfo = document.getElementById('pdf-info');
+            const pdfFileName = document.getElementById('pdf-filename');
+            const resumeArea = document.getElementById('resume');
+            const uploadStatus = document.getElementById('upload-status');
 
-        // 1. Unified Upload Handler
-        async function processFile(file) {
-            if (!file || !file.name.toLowerCase().endsWith('.pdf')) {
-                alert("Please upload a valid PDF file.");
-                return;
-            }
+            // Trigger file browser on click
+            dropZone.addEventListener('click', () => fileInput.click());
 
-            // Update UI state
-            pdfFileName.textContent = file.name;
-            pdfInfo.classList.remove('hidden');
-            document.getElementById('upload-status').innerText = "Uploading...";
-
-            const formData = new FormData();
-            formData.append("file", file);
-
-            try {
-                const res = await fetch("/rank", {
-                    method: "POST",
-                    body: formData
-                });
-
-                const data = await res.json();
-
-                if (data.extracted_text) {
-                    resumeArea.value = data.extracted_text;
-                    document.getElementById('upload-status').innerText = "Extraction Complete";
-                } else {
-                    throw new Error("No text found in PDF");
+            // Handle File Selection
+            fileInput.addEventListener('change', function () {
+                if (this.files && this.files[0]) {
+                    handleFile(this.files[0]);
                 }
-            } catch (err) {
-                console.error(err);
-                alert("Extraction failed. You can still paste text manually.");
-                document.getElementById('upload-status').innerText = "Error extracting text";
+            });
+
+            // Handle Drag & Drop
+            dropZone.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                dropZone.classList.add('border-sky-400', 'bg-sky-400/10');
+            });
+
+            dropZone.addEventListener('dragleave', () => {
+                dropZone.classList.remove('border-sky-400', 'bg-sky-400/10');
+            });
+
+            dropZone.addEventListener('drop', (e) => {
+                e.preventDefault();
+                dropZone.classList.remove('border-sky-400', 'bg-sky-400/10');
+                if (e.dataTransfer.files.length > 0) {
+                    handleFile(e.dataTransfer.files[0]);
+                }
+            });
+
+            async function handleFile(file) {
+                if (file.type !== "application/pdf") {
+                    alert("Please upload a PDF file.");
+                    return;
+                }
+
+                // 1. Update UI Immediately
+                pdfFileName.textContent = file.name;
+                pdfInfo.classList.remove('hidden'); // Force show the info bar
+                uploadStatus.textContent = "Extracting intelligence...";
+                uploadStatus.classList.add('text-sky-400', 'animate-pulse');
+
+                // 2. Prepare Data
+                const formData = new FormData();
+                formData.append('file', file);
+
+                try {
+                    const response = await fetch('/rank', {
+                        method: 'POST',
+                        body: formData
+                    });
+
+                    const data = await response.json();
+
+                    if (data.extracted_text) {
+                        resumeArea.value = data.extracted_text;
+                        uploadStatus.textContent = "Extraction complete!";
+                        uploadStatus.classList.remove('animate-pulse');
+                        uploadStatus.classList.replace('text-sky-400', 'text-emerald-400');
+                    } else {
+                        alert("Extraction failed: " + (data.error || "No text found"));
+                    }
+                } catch (error) {
+                    console.error("Upload error:", error);
+                    alert("Server connection failed.");
+                }
             }
+        });
+
+        // These need to be global for the onclick attributes
+        function clearPDF() {
+            document.getElementById('pdf-upload').value = '';
+            document.getElementById('pdf-info').classList.add('hidden');
+            document.getElementById('resume').value = '';
+            document.getElementById('upload-status').textContent = "Supported: PDF (Max 5MB)";
+            document.getElementById('upload-status').className = "text-xs text-slate-500";
         }
 
-        // 2. Click to Browse
-        dropZone.addEventListener('click', () => fileInput.click());
-
-        // 3. File Input Change
-        fileInput.addEventListener('change', (e) => {
-            if (e.target.files.length > 0) {
-                processFile(e.target.files[0]);
-            }
-        });
-
-        // 4. Drag & Drop Logic
-        dropZone.addEventListener('dragover', (e) => {
-            e.preventDefault();
-            dropZone.classList.add('border-sky-500', 'bg-sky-500/10');
-        });
-
-        dropZone.addEventListener('dragleave', () => {
-            dropZone.classList.remove('border-sky-500', 'bg-sky-500/10');
-        });
-
-        function handleDrop(e) {
-            e.preventDefault();
-            dropZone.classList.remove('border-sky-500', 'bg-sky-500/10');
-            const files = e.dataTransfer.files;
-            if (files.length > 0) {
-                processFile(files[0]);
-            }
-        }
-
-        // 5. Analysis Logic
         async function analyzeMatch() {
-            const resume = resumeArea.value;
+            const resume = document.getElementById('resume').value;
             const job = document.getElementById('job').value;
             const results = document.getElementById('results-container');
             const loader = document.getElementById('loader');
@@ -294,14 +305,6 @@
                 loader.classList.add('hidden');
                 alert("Analysis failed. Check server connection.");
             }
-        }
-
-        // UI Helpers
-        function clearPDF() {
-            fileInput.value = '';
-            pdfInfo.classList.add('hidden');
-            resumeArea.value = '';
-            document.getElementById('upload-status').innerText = "Supported: PDF (Max 5MB)";
         }
 
         function toggleTheme() {
