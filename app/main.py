@@ -270,9 +270,15 @@ async def extract_pdf(file: UploadFile = File(...)):
             content={"error": f"PDF extraction failed: {str(e)}"}
         )
 
+@app.get("/rank")
+async def rank_jobs_get():
+    """GET endpoint for /rank to prevent Method Not Allowed errors"""
+    return {"message": "POST endpoint available", "methods": ["POST"]}
+
 @app.post("/rank")
 async def rank_jobs(resume: str = None, jobs: List[str] = None, file: UploadFile = None):
     """Perfect job ranking with comprehensive optimizations"""
+    print(f"DEBUG: Received payload - resume: {resume}, jobs: {jobs}, file: {file}")
     try:
         # Handle PDF file upload
         extracted_text = None
