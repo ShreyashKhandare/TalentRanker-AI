@@ -158,9 +158,6 @@ app.add_middleware(
     allow_headers=["*"],  # Allows all headers
 )
 
-# Mount static files AFTER app creation
-app.mount("/static", StaticFiles(directory="static", html=True), name="static")
-
 @app.middleware("http")
 async def log_requests(request, call_next):
     """Comprehensive request logging with performance tracking"""
@@ -195,6 +192,11 @@ async def log_requests(request, call_next):
             f"Time: {process_time:.4f}s"
         )
         raise
+
+@app.get("/test")
+def test_endpoint():
+    """Simple test endpoint to verify API is working"""
+    return {"status": "ok", "message": "API is working"}
 
 @app.get("/health")
 def health():
