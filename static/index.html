@@ -181,6 +181,13 @@
     </div>
 
     <script>
+        // AUTO switch between local and deployed backend
+        const API_BASE =
+            window.location.hostname === "localhost" ||
+                window.location.hostname === "127.0.0.1"
+                ? "http://127.0.0.1:8000"
+                : "https://talentranker-ai.onrender.com";
+
         document.addEventListener('DOMContentLoaded', () => {
             const dropZone = document.getElementById('drop-zone');
             const fileInput = document.getElementById('pdf-upload');
@@ -245,13 +252,12 @@
                 uploadStatus.classList.remove('text-slate-500');
                 uploadStatus.classList.add('text-sky-400', 'animate-pulse');
 
-                // 2. Prepare Data
                 const formData = new FormData();
                 formData.append('file', file);
 
                 try {
-                    console.log('Sending file to https://talentranker-ai.onrender.com/rank');
-                    const response = await fetch('https://talentranker-ai.onrender.com/rank', {
+                    console.log('Sending file to ${API_BASE}/rank');
+                    const response = await fetch(`${API_BASE}/rank`, {
                         method: 'POST',
                         body: formData
                     });
@@ -301,6 +307,10 @@
             const results = document.getElementById('results-container');
             const loader = document.getElementById('loader');
 
+            console.log('DEBUG analyzeMatch - resume length:', resume.length, 'job length:', job.length);
+            console.log('DEBUG analyzeMatch - resume:', resume.substring(0, 100) + '...');
+            console.log('DEBUG analyzeMatch - job:', job.substring(0, 100) + '...');
+
             if (!resume || !job) {
                 alert("Please provide both resume and job description.");
                 return;
@@ -310,12 +320,17 @@
             loader.classList.remove('hidden');
 
             try {
-                const response = await fetch('https://talentranker-ai.onrender.com/rank', {
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 10000);
+
+                const response = await fetch(`${API_BASE}/rank`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ resume, jobs: [job] })
+                    body: JSON.stringify({ resume, jobs: [job] }),
+                    signal: controller.signal
                 });
 
+                clearTimeout(timeoutId);
                 const data = await response.json();
                 loader.classList.add('hidden');
                 results.classList.remove('hidden');
@@ -332,8 +347,10 @@
                     badge.innerText = score > 75 ? "Strong Match" : "Potential Gap";
                 }
             } catch (err) {
+                clearTimeout(timeoutId);
                 loader.classList.add('hidden');
-                alert("Analysis failed. Check server connection.");
+                console.error('Analysis error:', err);
+                alert(`Analysis failed: ${err.message}`);
             }
         }
 
