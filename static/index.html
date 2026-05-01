@@ -340,12 +340,12 @@
 
                 try {
                     let response;
-                    
+
                     // Use FormData for multipart requests (supports PDF upload)
                     const formData = new FormData();
-                    
+
                     if (pdfFile) {
-                        formData.append('file', pdfFile);
+                        formData.append('resumes', pdfFile);
                     }
                     if (resume) {
                         formData.append('resume', resume);
