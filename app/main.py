@@ -19,8 +19,8 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 # Import modular components
-from recommender import JobRanker
-from utils import extract_text_from_upload_file, validate_pdf_file, sanitize_text
+from .recommender import JobRanker
+from .utils import extract_text_from_upload_file, validate_pdf_file, sanitize_text
 
 print("PERFECT DEPLOYMENT: Bulletproof sklearn TF-IDF with maximum optimizations")
 logger.info("Initializing perfect deployment engine")
