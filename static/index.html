@@ -172,13 +172,6 @@
                 </div>
             </section>
 
-            <div id="status" class="hidden p-4 bg-slate-500/10 rounded-xl border border-slate-200/10">
-                <p class="text-sm font-medium text-slate-300">Status: Ready</p>
-            </div>
-
-            <div id="full" class="hidden p-4 bg-slate-500/10 rounded-xl border border-slate-200/10">
-                <pre class="text-xs text-slate-400 whitespace-pre-wrap">Response will appear here...</pre>
-            </div>
 
             <div id="loader"
                 class="hidden flex flex-col items-center justify-center p-20 glass rounded-3xl lg:col-span-1">
@@ -205,18 +198,15 @@
             const resumeArea = document.getElementById('resume');
             const uploadStatus = document.getElementById('upload-status');
 
-            console.log('PDF Upload Handler Initialized', { dropZone, fileInput, pdfInfo });
 
             // Trigger file browser on click
             dropZone.addEventListener('click', (e) => {
                 e.stopPropagation();
-                console.log('Drop zone clicked');
                 fileInput.click();
             });
 
             // Handle File Selection
             fileInput.addEventListener('change', function (e) {
-                console.log('File input changed', this.files);
                 if (this.files && this.files[0]) {
                     handleFile(this.files[0]);
                 }
@@ -226,7 +216,6 @@
             dropZone.addEventListener('dragover', (e) => {
                 e.preventDefault();
                 e.stopPropagation();
-                console.log('File dragged over');
                 dropZone.classList.add('border-sky-400', 'bg-sky-400/10');
             });
 
@@ -238,7 +227,6 @@
             dropZone.addEventListener('drop', (e) => {
                 e.preventDefault();
                 e.stopPropagation();
-                console.log('File dropped', e.dataTransfer.files);
                 dropZone.classList.remove('border-sky-400', 'bg-sky-400/10');
                 if (e.dataTransfer.files.length > 0) {
                     handleFile(e.dataTransfer.files[0]);
@@ -246,7 +234,6 @@
             });
 
             async function handleFile(file) {
-                console.log('Handling file:', file.name, file.type, file.size);
 
                 if (file.type !== "application/pdf") {
                     alert("Please upload a PDF file.");
@@ -254,7 +241,6 @@
                 }
 
                 // 1. Update UI Immediately
-                console.log('Updating UI for file:', file.name);
                 pdfFileName.textContent = file.name;
                 pdfInfo.classList.remove('hidden');
                 uploadStatus.textContent = "Extracting intelligence...";
@@ -276,12 +262,9 @@
                         signal: controller.signal
                     });
 
-                    console.log('Response status:', response.status, response.ok);
                     const data = await response.json();
-                    console.log('Response data:', data);
 
                     if (response.ok && data.extracted_text) {
-                        console.log('Extraction successful, text length:', data.extracted_text.length);
                         resumeArea.value = data.extracted_text;
                         uploadStatus.textContent = "Extraction complete! ✓";
                         uploadStatus.classList.remove('animate-pulse', 'text-sky-400');
@@ -323,9 +306,6 @@
                 const results = document.getElementById('results-container');
                 const loader = document.getElementById('loader');
 
-                console.log('DEBUG analyzeMatch - resume length:', resume.length, 'job length:', job.length);
-                console.log('DEBUG analyzeMatch - resume:', resume.substring(0, 100) + '...');
-                console.log('DEBUG analyzeMatch - job:', job.substring(0, 100) + '...');
 
                 if (!resume && !pdfFile) {
                     alert("Please provide either resume text or upload a PDF file.");
@@ -370,7 +350,6 @@
                     }
 
                     const data = await response.json();
-                    console.log("API Response:", data);
 
                     loader.classList.add('hidden');
                     results.classList.remove('hidden');
@@ -389,9 +368,6 @@
                 } catch (err) {
                     clearTimeout(timeoutId);
                     loader.classList.add('hidden');
-                    console.error('Analysis error:', err);
-                    document.getElementById('status').innerText = "Status: ERROR";
-                    document.getElementById('full').innerText = err.message;
                 } finally {
                     clearTimeout(timeoutId);
                 }
