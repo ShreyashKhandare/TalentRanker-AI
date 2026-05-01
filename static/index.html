@@ -289,95 +289,86 @@
                     clearTimeout(timeoutId);
                 }
             };
-
-            // These need to be global for the onclick attributes
-            function clearPDF() {
-                document.getElementById('pdf-upload').value = '';
-                document.getElementById('pdf-info').classList.add('hidden');
-                document.getElementById('resume').value = '';
-                document.getElementById('upload-status').textContent = "Supported: PDF (Max 5MB)";
-                document.getElementById('upload-status').className = "text-xs text-slate-500";
-            }
-
-            async function analyzeMatch() {
-                const resume = document.getElementById('resume').value;
-                const job = document.getElementById('job').value;
-                const pdfFile = document.getElementById('pdf-upload').files[0];
-                const results = document.getElementById('results-container');
-                const loader = document.getElementById('loader');
-
-
-                if (!resume && !pdfFile) {
-                    alert("Please provide either resume text or upload a PDF file.");
-                    return;
-                }
-
-                if (!job) {
-                    alert("Please provide job description.");
-                    return;
-                }
-
-                results.classList.add('hidden');
-                loader.classList.remove('hidden');
-
-                const controller = new AbortController();
-                const timeoutId = setTimeout(() => controller.abort(), 10000);
-
-                try {
-                    let response;
-
-                    // Use FormData for multipart requests (supports PDF upload)
-                    const formData = new FormData();
-
-                    // Prioritize extracted text over file upload
-                    if (resume && resume.trim()) {
-                        formData.append('resume', resume);
-                    } else if (pdfFile) {
-                        formData.append('file', pdfFile);
-                    }
-                    formData.append('jobs', job);
-
-                    response = await fetch(`${API_BASE}/rank`, {
-                        method: 'POST',
-                        body: formData,
-                        signal: controller.signal
-                    });
-
-                    clearTimeout(timeoutId);
-
-                    if (!response.ok) {
-                        throw new Error(`HTTP error! Status: ${response.status}`);
-                    }
-
-                    const data = await response.json();
-
-                    loader.classList.add('hidden');
-                    results.classList.remove('hidden');
-
-                    if (data.match_score !== undefined) {
-                        const score = (data.match_score * 100).toFixed(1);
-                        document.getElementById('score-val').innerText = score + "%";
-                        document.getElementById('explanation').innerText = data.explanation || "Analysis complete.";
-
-                        const badge = document.getElementById('verdict-badge');
-                        badge.className = score > 75
-                            ? "px-4 py-1 rounded-full text-[10px] font-black uppercase bg-emerald-500/20 text-emerald-500"
-                            : "px-4 py-1 rounded-full text-[10px] font-black uppercase bg-amber-500/20 text-amber-500";
-                        badge.innerText = score > 75 ? "Strong Match" : "Potential Gap";
-                    }
-                } catch (err) {
-                    clearTimeout(timeoutId);
-                    loader.classList.add('hidden');
-                } finally {
-                    clearTimeout(timeoutId);
-                }
-            };
         });
 
-        // Make functions globally accessible for onclick handlers
-        window.analyzeMatch = analyzeMatch;
-        window.clearPDF = clearPDF;
-        window.toggleTheme = toggleTheme;
+        // Global functions for onclick handlers
+        function clearPDF() {
+            document.getElementById('pdf-upload').value = '';
+            document.getElementById('pdf-info').classList.add('hidden');
+            document.getElementById('resume').value = '';
+            document.getElementById('upload-status').textContent = "Supported: PDF (Max 5MB)";
+            document.getElementById('upload-status').className = "text-xs text-slate-500";
+        }
+
+        async function analyzeMatch() {
+            const resume = document.getElementById('resume').value;
+            const job = document.getElementById('job').value;
+            const results = document.getElementById('results-container');
+            const loader = document.getElementById('loader');
+
+            if (!resume || resume.trim() === '') {
+                alert("Please provide resume text or upload a PDF file for extraction.");
+                return;
+            }
+
+            if (!job || job.trim() === '') {
+                alert("Please provide job description.");
+                return;
+            }
+
+            results.classList.add('hidden');
+            loader.classList.remove('hidden');
+
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 10000);
+
+            try {
+                const formData = new FormData();
+                formData.append('resume', resume);
+                formData.append('jobs', job);
+
+                const response = await fetch(`${API_BASE}/rank`, {
+                    method: 'POST',
+                    body: formData,
+                    signal: controller.signal
+                });
+
+                clearTimeout(timeoutId);
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! Status: ${response.status}`);
+                }
+
+                const data = await response.json();
+
+                loader.classList.add('hidden');
+                results.classList.remove('hidden');
+
+                if (data.match_score !== undefined) {
+                    const score = (data.match_score * 100).toFixed(1);
+                    document.getElementById('score-val').innerText = score + "%";
+                    document.getElementById('explanation').innerText = data.explanation || "Analysis complete.";
+
+                    const badge = document.getElementById('verdict-badge');
+                    badge.className = score > 75
+                        ? "px-4 py-1 rounded-full text-[10px] font-black uppercase bg-emerald-500/20 text-emerald-500"
+                        : "px-4 py-1 rounded-full text-[10px] font-black uppercase bg-amber-500/20 text-amber-500";
+                    badge.innerText = score > 75 ? "Strong Match" : "Potential Gap";
+                }
+            } catch (err) {
+                clearTimeout(timeoutId);
+                loader.classList.add('hidden');
+                alert("Analysis failed: " + err.message);
+            } finally {
+                clearTimeout(timeoutId);
+            }
+        }
+
+        function toggleTheme() {
+            const body = document.documentElement;
+            const current = body.getAttribute('data-theme');
+            body.setAttribute('data-theme', current === 'light' ? 'dark' : 'light');
+        }
     </script>
 </body>
 
