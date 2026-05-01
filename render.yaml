@@ -8,6 +8,6 @@ services:
       pip install --upgrade pip
       pip install -r requirements.txt
 
-    startCommand: python minimal_main.py
+    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
 
     pythonVersion: 3.10.13
