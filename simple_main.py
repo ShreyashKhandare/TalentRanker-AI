@@ -1,6 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse
+from fastapi.staticfiles import StaticFiles
 import uvicorn
 import os
 import re
@@ -16,6 +17,9 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Mount static files
+app.mount("/static", StaticFiles(directory="static"), name="static")
 
 def simple_text_similarity(resume: str, job: str) -> float:
     """Simple text similarity without ML dependencies"""
@@ -34,7 +38,12 @@ def simple_text_similarity(resume: str, job: str) -> float:
 
 @app.get("/")
 async def root():
-    return {"message": "TalentRanker AI - Working!", "status": "running"}
+    """Serve the frontend HTML"""
+    try:
+        with open("static/index.html", "r", encoding="utf-8") as f:
+            return HTMLResponse(content=f.read())
+    except FileNotFoundError:
+        return {"message": "TalentRanker AI - Working!", "status": "running"}
 
 @app.get("/health")
 async def health():
