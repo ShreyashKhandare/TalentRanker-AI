@@ -269,9 +269,8 @@
 
                     const formData = new FormData();
                     formData.append('file', file);
-                    formData.append('jobs', job);
 
-                    const response = await fetch(`${API_BASE}/rank`, {
+                    const response = await fetch(`${API_BASE}/extract-pdf`, {
                         method: 'POST',
                         body: formData,
                         signal: controller.signal
@@ -350,11 +349,11 @@
                     // Use FormData for multipart requests (supports PDF upload)
                     const formData = new FormData();
 
-                    if (pdfFile) {
-                        formData.append('file', pdfFile);
-                    }
-                    if (resume) {
+                    // Prioritize extracted text over file upload
+                    if (resume && resume.trim()) {
                         formData.append('resume', resume);
+                    } else if (pdfFile) {
+                        formData.append('file', pdfFile);
                     }
                     formData.append('jobs', job);
 
@@ -399,11 +398,10 @@
             };
         });
 
-        function toggleTheme() {
-            const body = document.documentElement;
-            const current = body.getAttribute('data-theme');
-            body.setAttribute('data-theme', current === 'light' ? 'dark' : 'light');
-        }
+        // Make functions globally accessible for onclick handlers
+        window.analyzeMatch = analyzeMatch;
+        window.clearPDF = clearPDF;
+        window.toggleTheme = toggleTheme;
     </script>
 </body>
 
