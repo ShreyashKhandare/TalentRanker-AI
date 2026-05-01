@@ -260,15 +260,20 @@
                 uploadStatus.classList.remove('text-slate-500');
                 uploadStatus.classList.add('text-sky-400', 'animate-pulse');
 
+                let timeoutId;
 
                 try {
                     const controller = new AbortController();
-                    const timeoutId = setTimeout(() => controller.abort(), 10000);
+                    timeoutId = setTimeout(() => controller.abort(), 10000);
+
+                    const formData = new FormData();
+                    formData.append('file', file);
+                    formData.append('jobs', job);
 
                     const response = await fetch(`${API_BASE}/rank`, {
                         method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ resume, jobs: [job] }),
+                        body: formData,
+                        signal: controller.signal
                     });
 
                     console.log('Response status:', response.status, response.ok);
@@ -345,7 +350,7 @@
                     const formData = new FormData();
 
                     if (pdfFile) {
-                        formData.append('resumes', pdfFile);
+                        formData.append('file', pdfFile);
                     }
                     if (resume) {
                         formData.append('resume', resume);
