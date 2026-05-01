@@ -133,9 +133,12 @@
                     </div>
 
                     <div>
-                        <label for="job"
-                            class="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-3">Job
-                            Description</label>
+                        <div class="flex justify-between items-center mb-3">
+                            <label for="job" class="text-xs font-bold text-slate-400 uppercase tracking-widest">Job
+                                Description</label>
+                            <button type="button" onclick="clearJob()"
+                                class="text-xs font-black text-red-500 uppercase tracking-tighter hover:text-red-400">Remove</button>
+                        </div>
                         <textarea id="job"
                             class="w-full h-44 rounded-2xl p-5 text-sm glass text-white placeholder-slate-500 focus:ring-2 focus:ring-sky-500 outline-none"
                             placeholder="Paste the target job description here..."></textarea>
@@ -362,6 +365,10 @@
             } finally {
                 clearTimeout(timeoutId);
             }
+        }
+
+        function clearJob() {
+            document.getElementById('job').value = '';
         }
 
         function toggleTheme() {
