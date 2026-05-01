@@ -25,13 +25,24 @@ class PerfectEmbedder:
                 max_df=0.95,  # Remove too common terms
                 sublinear_tf=True  # Log scaling
             )
-            self.fitted = False
+            
+            # Pre-fit with default vocabulary to prevent cold start
+            default_texts = [
+                "experience skills qualifications education",
+                "software development programming engineering",
+                "project management leadership communication",
+                "data analysis machine learning algorithms",
+                "technical requirements specifications documentation"
+            ]
+            self.vectorizer.fit(default_texts)
+            self.fitted = True
+            
             self.cache = {}  # Simple caching
             self.initialization_time = time.time()
             self.request_count = 0
             self.total_similarity_time = 0
             
-            logger.info("PerfectEmbedder initialized with optimizations")
+            logger.info("PerfectEmbedder initialized with optimizations and pre-fitted vocabulary")
         except Exception as e:
             logger.error(f"Failed to initialize PerfectEmbedder: {e}")
             raise
