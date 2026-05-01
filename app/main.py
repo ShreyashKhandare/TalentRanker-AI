@@ -145,51 +145,61 @@ async def rank_jobs_get():
     return {"message": "POST endpoint available", "methods": ["POST"]}
 
 @app.post("/rank")
-async def rank_jobs(resume: str = None, jobs: List[str] = None, file: UploadFile = None):
-    """Perfect job ranking with comprehensive optimizations"""
-    print(f"DEBUG: Received payload - resume: {resume}, jobs: {jobs}, file: {file}")
+async def rank_jobs(
+    resume: str = Form(None), 
+    jobs: str = Form(None), 
+    file: UploadFile = File(None)
+):
+    """Stateless job ranking with multipart support for Render deployment"""
     try:
-        # Handle PDF file upload
-        extracted_text = None
+        # Parse jobs from form data (comma-separated or newline-separated)
+        job_list = []
+        if jobs:
+            # Handle both comma-separated and newline-separated job descriptions
+            job_list = [job.strip() for job in jobs.replace('\n', ',').split(',') if job.strip()]
+        
+        # Validate input combinations
+        if not file and not resume:
+            raise HTTPException(status_code=400, detail="Either resume text or PDF file must be provided")
+        
+        if not job_list:
+            raise HTTPException(status_code=400, detail="Job descriptions must be provided")
+        
+        # Memory management check for Render's 512MB limit
+        if len(job_list) > 100:
+            raise HTTPException(status_code=400, detail="Maximum 100 jobs allowed per request for memory constraints")
+        
+        # Handle PDF file upload with proper stream management
+        resume_text = resume
         if file and file.filename.lower().endswith('.pdf'):
+            # Reset file pointer to beginning
+            await file.seek(0)
             extracted_text = extract_text_from_upload_file(file)
             
             if not extracted_text:
                 return JSONResponse(
                     status_code=400,
-                    content={"error": "Could not extract text. PDF may be scanned or unsupported."}
+                    content={"error": "Could not extract text. PDF may be scanned, empty, or corrupted."}
                 )
             
-            # If only PDF is uploaded, return extracted text
-            if not jobs or len(jobs) == 0:
-                return {
-                    "extracted_text": extracted_text
-                }
-            
-            resume = extracted_text
-        elif not resume:
-            # Input validation for text-only requests
-            if not resume or not resume.strip():
-                raise HTTPException(status_code=400, detail="Resume text cannot be empty")
-            
-        if not jobs or len(jobs) == 0:
-            raise HTTPException(status_code=400, detail="Jobs list cannot be empty")
-            
-        # Limit jobs to prevent timeout
-        if len(jobs) > 100:
-            raise HTTPException(status_code=400, detail="Maximum 100 jobs allowed per request")
+            resume_text = sanitize_text(extracted_text)
         
-        # Clean and validate inputs
-        resume = resume.strip()
-        jobs = [job.strip() for job in jobs if job.strip()]
+        # Validate and clean resume text
+        if not resume_text or not resume_text.strip():
+            raise HTTPException(status_code=400, detail="Resume text cannot be empty")
         
-        logger.info(f"Processing perfect ranking request: {len(jobs)} jobs")
+        resume_text = sanitize_text(resume_text.strip())
+        
+        # Clean job descriptions
+        clean_jobs = [sanitize_text(job.strip()) for job in job_list if job.strip()]
+        
+        logger.info(f"Processing stateless ranking request: {len(clean_jobs)} jobs")
         start_time = time.time()
         
-        # Use JobRanker for processing
-        result = ranker.rank_resume_against_jobs(resume, jobs)
+        # Use JobRanker for processing (stateless - no session storage)
+        result = ranker.rank_resume_against_jobs(resume_text, clean_jobs)
         
-        logger.info(f"Ranking completed in {result.get('processing_time_seconds', 0):.4f}s")
+        logger.info(f"Stateless ranking completed in {result.get('processing_time_seconds', 0):.4f}s")
         return JSONResponse(status_code=200, content=result)
         
     except HTTPException:

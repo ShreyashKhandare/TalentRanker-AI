@@ -314,6 +314,7 @@
             async function analyzeMatch() {
                 const resume = document.getElementById('resume').value;
                 const job = document.getElementById('job').value;
+                const pdfFile = document.getElementById('pdf-upload').files[0];
                 const results = document.getElementById('results-container');
                 const loader = document.getElementById('loader');
 
@@ -321,8 +322,13 @@
                 console.log('DEBUG analyzeMatch - resume:', resume.substring(0, 100) + '...');
                 console.log('DEBUG analyzeMatch - job:', job.substring(0, 100) + '...');
 
-                if (!resume || !job) {
-                    alert("Please provide both resume and job description.");
+                if (!resume && !pdfFile) {
+                    alert("Please provide either resume text or upload a PDF file.");
+                    return;
+                }
+
+                if (!job) {
+                    alert("Please provide job description.");
                     return;
                 }
 
@@ -333,10 +339,22 @@
                 const timeoutId = setTimeout(() => controller.abort(), 10000);
 
                 try {
-                    const response = await fetch(`${API_BASE}/rank`, {
+                    let response;
+                    
+                    // Use FormData for multipart requests (supports PDF upload)
+                    const formData = new FormData();
+                    
+                    if (pdfFile) {
+                        formData.append('file', pdfFile);
+                    }
+                    if (resume) {
+                        formData.append('resume', resume);
+                    }
+                    formData.append('jobs', job);
+
+                    response = await fetch(`${API_BASE}/rank`, {
                         method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ resume, jobs: [job] }),
+                        body: formData,
                         signal: controller.signal
                     });
 
