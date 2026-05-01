@@ -1,0 +1,28 @@
+{
+  "name": "talentranker-ai",
+  "version": "1.0.0",
+  "description": "An intelligent job-fit ranking system that goes beyond keyword matching using learning-to-rank models and semantic embeddings.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build-css": "tailwindcss -i ./static/input.css -o ./static/style.css --watch",
+    "build-css-prod": "tailwindcss -i ./static/input.css -o ./static/style.css --minify"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ShreyashKhandare/TalentRanker-AI.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/ShreyashKhandare/TalentRanker-AI/issues"
+  },
+  "homepage": "https://github.com/ShreyashKhandare/TalentRanker-AI#readme",
+  "devDependencies": {
+    "autoprefixer": "^10.5.0",
+    "postcss": "^8.5.13",
+    "tailwindcss": "^3.4.0"
+  }
+}
