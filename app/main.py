@@ -42,6 +42,9 @@ app = FastAPI(
     redoc_url="/redoc"
 )
 
+# Mount static files directory
+app.mount("/static", StaticFiles(directory="static"), name="static")
+
 # Add CORS middleware
 app.add_middleware(
     CORSMiddleware,
