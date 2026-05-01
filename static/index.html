@@ -136,8 +136,16 @@
                         <div class="flex justify-between items-center mb-3">
                             <label for="job" class="text-xs font-bold text-slate-400 uppercase tracking-widest">Job
                                 Description</label>
-                            <button type="button" onclick="clearJob()"
-                                class="text-xs font-black text-red-500 uppercase tracking-tighter hover:text-red-400">Remove</button>
+                            <button type="button" onclick="clearJobDescription()"
+                                class="flex items-center gap-1 text-xs font-semibold text-red-500 hover:text-red-700 transition-colors">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24"
+                                    fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                    stroke-linejoin="round">
+                                    <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
+                                    <path d="M3 3v5h5" />
+                                </svg>
+                                Clear & Reuse
+                            </button>
                         </div>
                         <textarea id="job"
                             class="w-full h-44 rounded-2xl p-5 text-sm glass text-white placeholder-slate-500 focus:ring-2 focus:ring-sky-500 outline-none"
@@ -367,8 +375,18 @@
             }
         }
 
-        function clearJob() {
-            document.getElementById('job').value = '';
+        function clearJobDescription() {
+            const jobArea = document.getElementById('job');
+            if (jobArea) {
+                jobArea.value = ''; // Clears the text
+                jobArea.focus();    // Sets cursor back to the box for convenience
+
+                // Optional: Clear results from previous analysis
+                const resultsContainer = document.getElementById('results-container');
+                if (resultsContainer) {
+                    resultsContainer.classList.add('hidden');
+                }
+            }
         }
 
         function toggleTheme() {
